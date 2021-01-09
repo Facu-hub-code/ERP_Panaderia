@@ -17,14 +17,14 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author facundolorenzo
  */
-public class StockAdmin extends javax.swing.JFrame {
+public class StockTrabajador extends javax.swing.JFrame {
 
     private static String correo;
 
     /**
      * Creates new form ControlStockAdmin
      */
-    public StockAdmin(String correo) {
+    public StockTrabajador(String correo) {
         initComponents();
         this.correo = correo;
         setLocationRelativeTo(null);

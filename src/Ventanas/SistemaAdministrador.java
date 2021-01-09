@@ -219,6 +219,8 @@ public class SistemaAdministrador extends javax.swing.JFrame {
 
     private void btn_SalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_SalirActionPerformed
         this.dispose();
+        Login lg = new Login();
+        lg.setVisible(true);
     }//GEN-LAST:event_btn_SalirActionPerformed
 
     

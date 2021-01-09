@@ -21,7 +21,7 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author facundolorenzo
  */
-public class CajaAdmin extends javax.swing.JFrame {
+public class CajaTrabajador extends javax.swing.JFrame {
 
     private static String correo;
     private static String ID;
@@ -29,13 +29,13 @@ public class CajaAdmin extends javax.swing.JFrame {
     /**
      * Creates new form ControlCajaAdmin
      */
-    public CajaAdmin(String correo) {
+    public CajaTrabajador(String correo) {
         initComponents();
         this.correo = correo;
         jLabelUser.setText(correo);
         jLabelTotal.setText("Total: " + calcularTotal() + " $");
         setLocationRelativeTo(null);
-        setTitle("Control de Caja - Sistema Administrador - Panaderia Gloria");
+        setTitle("Control de Caja - Sistema Trabajador - Panaderia Gloria");
         actualizarFecha();
         actualizar();
     }
