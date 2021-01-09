@@ -138,7 +138,6 @@ public class CajaAdmin extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jTextFieldMonto = new javax.swing.JTextField();
         jButtonAgregar = new javax.swing.JButton();
-        jButtonActualizar = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTableCaja = new javax.swing.JTable();
         jComboBoxConcepto = new javax.swing.JComboBox<>();
@@ -175,7 +174,7 @@ public class CajaAdmin extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabelUser, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jButtonSalir, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButtonSalir)
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -215,13 +214,6 @@ public class CajaAdmin extends javax.swing.JFrame {
         jButtonAgregar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonAgregarActionPerformed(evt);
-            }
-        });
-
-        jButtonActualizar.setText("Actualizar");
-        jButtonActualizar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonActualizarActionPerformed(evt);
             }
         });
 
@@ -272,7 +264,6 @@ public class CajaAdmin extends javax.swing.JFrame {
                     .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonActualizar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonActualizar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
@@ -297,8 +288,6 @@ public class CajaAdmin extends javax.swing.JFrame {
                         .addComponent(jButtonAgregar)
                         .addGap(18, 18, 18)
                         .addComponent(jButtonActualizar1)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButtonActualizar)
                         .addGap(18, 18, 18)
                         .addComponent(jLabelTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -333,6 +322,8 @@ public class CajaAdmin extends javax.swing.JFrame {
      */
     private void jButtonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSalirActionPerformed
         this.dispose();
+        SistemaAdministrador sistAdmin = new SistemaAdministrador(correo);
+        sistAdmin.setVisible(true);
     }//GEN-LAST:event_jButtonSalirActionPerformed
 
     private void jTextFieldMontoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldMontoMouseClicked
@@ -343,10 +334,6 @@ public class CajaAdmin extends javax.swing.JFrame {
         agregarMovimiento();
         actualizar();
     }//GEN-LAST:event_jButtonAgregarActionPerformed
-
-    private void jButtonActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonActualizarActionPerformed
-        actualizar();
-    }//GEN-LAST:event_jButtonActualizarActionPerformed
 
     private void jTextFieldMontoKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldMontoKeyTyped
         char c = evt.getKeyChar();
@@ -379,7 +366,6 @@ public class CajaAdmin extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButtonActualizar;
     private javax.swing.JButton jButtonActualizar1;
     private javax.swing.JButton jButtonAgregar;
     private javax.swing.JButton jButtonModificar;
