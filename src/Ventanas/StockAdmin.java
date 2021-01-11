@@ -6,12 +6,27 @@
 package Ventanas;
 
 import Conexion.Conexion;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import java.sql.ResultSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Workbook;
 
 /**
  *
@@ -36,6 +51,103 @@ public class StockAdmin extends javax.swing.JFrame {
     /**
      * Metodos funcionales.
      */
+    
+    private static void reporteStock() throws SQLException, FileNotFoundException, IOException {
+
+        Workbook book = new XSSFWorkbook(); //se crea un libro
+        Sheet sheet = book.createSheet("Productos"); //se crea una hoja de calculos llamada "Productos"
+
+        try {
+            //se crean las cabeceras de la tabla en un arreglo de strings
+            String[] cabecera = new String[]{"id", "nombre", "cantidad", "precio"}; //luego probar con otros nombres
+            
+            
+//            CellStyle headerStyle = book.createCellStyle();
+//            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+//            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+//            headerStyle.setBorderBottom(BorderStyle.THIN);
+//            headerStyle.setBorderLeft(BorderStyle.THIN);
+//            headerStyle.setBorderRight(BorderStyle.THIN);
+//            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+//            Font font = book.createFont();
+//            font.setFontName("Arial");
+//            font.setBold(true);
+//            font.setColor(IndexedColors.WHITE.getIndex());
+//            font.setFontHeightInPoints((short) 12);
+//            headerStyle.setFont(font);
+
+            Row filaEncabezados = sheet.createRow(4);
+
+            for (int i = 0; i < cabecera.length; i++) {
+                Cell celdaEnzabezado = filaEncabezados.createCell(i);
+//                celdaEnzabezado.setCellStyle(headerStyle);
+                celdaEnzabezado.setCellValue(cabecera[i]);
+            }
+            //tooooodo eso para crar las cabeceras de las tablas
+
+            
+            
+            //ahora vamos a llenar la tabla desde la base de datos
+            Connection conn = Conexion.conectar();
+            
+            int numFilaDatos = 4; //cantidad de filas de datos
+
+//            CellStyle datosEstilo = book.createCellStyle();
+//            datosEstilo.setBorderBottom(BorderStyle.THIN);
+//            datosEstilo.setBorderLeft(BorderStyle.THIN);
+//            datosEstilo.setBorderRight(BorderStyle.THIN);
+//            datosEstilo.setBorderBottom(BorderStyle.THIN);
+
+            PreparedStatement ps = conn.prepareStatement("SELECT id, nombre, cantidad, precio FROM stock");
+            ResultSet rs = ps.executeQuery();
+
+            int numCol = rs.getMetaData().getColumnCount(); //numero de columnas de la bdd.
+
+            while (rs.next()) {
+                Row filaDatos = sheet.createRow(numFilaDatos); //crea una fila por cada tipo de dato.
+
+                for (int i = 1; i < numCol; i++) {
+
+                    Cell CeldaDatos = filaDatos.createCell(i); //crea una celda
+//                    CeldaDatos.setCellStyle(datosEstilo);
+
+                    if (i == 1) {
+                        CeldaDatos.setCellValue(rs.getInt("id")); //obtiene el id de la bdd.
+                    } else if(i == 2){
+                        CeldaDatos.setCellValue(rs.getString("nombre")); //obtiene el nombre de la bbd.
+                    }
+                    else {
+                        CeldaDatos.setCellValue(rs.getDouble(i));
+                    }
+                }
+                // TODO ver celda importes
+//                Cell celdaImporte = filaDatos.createCell(4);
+//                celdaImporte.setCellStyle(datosEstilo);
+//                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
+
+                numFilaDatos++; //TODO ver
+
+            }
+            
+            sheet.autoSizeColumn(0);
+            sheet.autoSizeColumn(1);
+            sheet.autoSizeColumn(2);
+            sheet.autoSizeColumn(3);
+            sheet.autoSizeColumn(4);
+
+            sheet.setZoom(150);
+
+            FileOutputStream fileOut = new FileOutputStream("ReporteStock.xlsx");
+            book.write(fileOut);
+            fileOut.close();
+            conn.close();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+        
+    }
+    
     public void filtrarDatos(String valor) {
         Connection conn = Conexion.conectar();
         String[] titulos = {"ID", "Nombre", "Cantidad", "Precio"};
@@ -166,6 +278,7 @@ public class StockAdmin extends javax.swing.JFrame {
         jTableStock = new javax.swing.JTable();
         jButtonEliminar = new javax.swing.JButton();
         jTextFieldPrecio = new javax.swing.JTextField();
+        jButtonReporte = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -212,7 +325,7 @@ public class StockAdmin extends javax.swing.JFrame {
 
         jTextFieldCantidad.setForeground(java.awt.Color.lightGray);
         jTextFieldCantidad.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldCantidad.setText("cantidad");
+        jTextFieldCantidad.setText("Cantidad");
         jTextFieldCantidad.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jTextFieldCantidadMouseClicked(evt);
@@ -226,7 +339,7 @@ public class StockAdmin extends javax.swing.JFrame {
 
         jTextFieldID.setForeground(java.awt.Color.lightGray);
         jTextFieldID.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldID.setText("id");
+        jTextFieldID.setText("ID");
         jTextFieldID.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jTextFieldIDMouseClicked(evt);
@@ -240,7 +353,7 @@ public class StockAdmin extends javax.swing.JFrame {
 
         jTextFieldNombre.setForeground(java.awt.Color.lightGray);
         jTextFieldNombre.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldNombre.setText("nombre");
+        jTextFieldNombre.setText("Nombre");
         jTextFieldNombre.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jTextFieldNombreMouseClicked(evt);
@@ -293,7 +406,7 @@ public class StockAdmin extends javax.swing.JFrame {
 
         jTextFieldPrecio.setForeground(java.awt.Color.lightGray);
         jTextFieldPrecio.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldPrecio.setText("precio");
+        jTextFieldPrecio.setText("Precio");
         jTextFieldPrecio.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jTextFieldPrecioMouseClicked(evt);
@@ -305,6 +418,13 @@ public class StockAdmin extends javax.swing.JFrame {
             }
         });
 
+        jButtonReporte.setText("Reporte");
+        jButtonReporte.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonReporteActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -312,37 +432,41 @@ public class StockAdmin extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jTextFieldID, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextFieldNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextFieldCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextFieldPrecio, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
-                        .addComponent(jButtonAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButtonModificar, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButtonEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jButtonEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButtonModificar, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButtonAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jTextFieldPrecio, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jTextFieldCantidad, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jTextFieldID, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jTextFieldNombre, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE))
+                    .addComponent(jButtonReporte, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 847, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextFieldID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextFieldNombre, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextFieldCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonModificar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonEliminar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jTextFieldPrecio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jTextFieldID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jTextFieldNombre, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jTextFieldCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jTextFieldPrecio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(272, 272, 272)
+                        .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButtonReporte, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButtonModificar, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButtonEliminar))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
 
@@ -446,10 +570,30 @@ public class StockAdmin extends javax.swing.JFrame {
         jTextFieldPrecio.setText(jTableStock.getValueAt(filaSelec, 3).toString());
     }//GEN-LAST:event_jTableStockMouseClicked
 
+    private void jButtonReporteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReporteActionPerformed
+        try {
+            reporteStock();
+        } catch (SQLException ex) {
+            Logger.getLogger(StockAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(StockAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        actualizarStock();
+    }//GEN-LAST:event_jButtonReporteActionPerformed
+
+    
+    
+    public static void main(String[] args) throws SQLException, IOException {
+        reporteStock();
+    }
+    
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonAgregar;
     private javax.swing.JButton jButtonEliminar;
     private javax.swing.JButton jButtonModificar;
+    private javax.swing.JButton jButtonReporte;
     private javax.swing.JButton jButtonSalir;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
