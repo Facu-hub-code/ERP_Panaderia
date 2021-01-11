@@ -59,10 +59,9 @@ public class StockAdmin extends javax.swing.JFrame {
 
         //Se crea una hoja de calculos.
         Workbook book = new XSSFWorkbook();
-        Sheet sheet = book.createSheet("Productos");
+        Sheet sheet = book.createSheet("Stock");
 
         try {
-            // <editor-fold defaultstate="collapsed" desc="Estilo de la hoja de calculos"> 
             //Se crea y se maquilla la celda del titulo.
             CellStyle tituloEstilo = book.createCellStyle();
             //Se centra el texto.
@@ -98,7 +97,7 @@ public class StockAdmin extends javax.swing.JFrame {
             font.setColor(IndexedColors.WHITE.getIndex());
             font.setFontHeightInPoints((short) 12);
             headerStyle.setFont(font);
-
+            //cambiar segun cantidad de datos
             Row filaEncabezados = sheet.createRow(3);
 
             for (int i = 0; i < cabecera.length; i++) {
@@ -111,15 +110,14 @@ public class StockAdmin extends javax.swing.JFrame {
             PreparedStatement ps;
             ResultSet rs;
 
+            //modificar segun la cantidad de datos.
             int numFilaDatos = 4;
             
-            // <editor-fold defaultstate="collapsed" desc="Estilo de la celda"> 
             CellStyle datosEstilo = book.createCellStyle();
             datosEstilo.setBorderBottom(BorderStyle.THIN);
             datosEstilo.setBorderLeft(BorderStyle.THIN);
             datosEstilo.setBorderRight(BorderStyle.THIN);
             datosEstilo.setBorderBottom(BorderStyle.THIN);
-            //</editor-fold>
             
             ps = conn.prepareStatement("SELECT id, nombre, cantidad, precio FROM stock");
             rs = ps.executeQuery();
@@ -136,10 +134,16 @@ public class StockAdmin extends javax.swing.JFrame {
 
                     if (a == 2 || a == 3) {
                         CeldaDatos.setCellValue(rs.getDouble(a + 1));
-                    } else {
+                    }else if(a == 0){
+                        CeldaDatos.setCellValue(rs.getInt(a + 1));
+                    }
+                    else {
                         CeldaDatos.setCellValue(rs.getString(a + 1));
                     }
                 }
+
+
+
 //                Cell celdaImporte = filaDatos.createCell(4);
 //                celdaImporte.setCellStyle(datosEstilo);
 //                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
@@ -158,6 +162,7 @@ public class StockAdmin extends javax.swing.JFrame {
             FileOutputStream fileOut = new FileOutputStream("ReporteProductos.xlsx");
             book.write(fileOut);
             fileOut.close();
+            JOptionPane.showMessageDialog(null, "Reporte de Stock guardado");
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, e.toString());

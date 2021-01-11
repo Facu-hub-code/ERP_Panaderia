@@ -7,15 +7,33 @@ package Ventanas;
 
 import Conexion.Conexion;
 import Recursos.Producto;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -41,6 +59,125 @@ public class VentasAdmin extends javax.swing.JFrame {
     /**
      * Metodos que definen la funcionalidad del sistema
      */
+    
+    
+        private static void reporte() throws SQLException, FileNotFoundException, IOException {
+
+        //Se crea una hoja de calculos.
+        Workbook book = new XSSFWorkbook();
+        Sheet sheet = book.createSheet("Ventas");
+
+        try {
+            //Se crea y se maquilla la celda del titulo.
+            CellStyle tituloEstilo = book.createCellStyle();
+            //Se centra el texto.
+            tituloEstilo.setAlignment(HorizontalAlignment.CENTER);
+            tituloEstilo.setVerticalAlignment(VerticalAlignment.CENTER);
+            //Establece el estilo de la fuente.
+            Font fuenteTitulo = book.createFont();
+            fuenteTitulo.setFontName("Arial");
+            fuenteTitulo.setBold(true);
+            fuenteTitulo.setFontHeightInPoints((short) 14);
+            tituloEstilo.setFont(fuenteTitulo);
+            //Crea una fila para los titulos.
+            Row filaTitulo = sheet.createRow(1);
+            Cell celdaTitulo = filaTitulo.createCell(1);
+            celdaTitulo.setCellStyle(tituloEstilo);
+            celdaTitulo.setCellValue("Reporte de Ventas");
+            sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3)); //resize
+
+            //se crean las cabeceras de la tabla
+            String[] cabecera = new String[]{"Id", "Nombre", "Precio", "Cantidad", "Total", "Fecha", "Tarjeta"};
+
+            CellStyle headerStyle = book.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+            Font font = book.createFont();
+            font.setFontName("Arial");
+            font.setBold(true);
+            font.setColor(IndexedColors.WHITE.getIndex());
+            font.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(font);
+            //cambiar segun cantidad de datos
+            Row filaEncabezados = sheet.createRow(6);
+
+            for (int i = 0; i < cabecera.length; i++) {
+                Cell celdaEnzabezado = filaEncabezados.createCell(i);
+                celdaEnzabezado.setCellStyle(headerStyle);
+                celdaEnzabezado.setCellValue(cabecera[i]);
+            }//</editor-fold> 
+            
+            Connection conn = Conexion.conectar();
+            PreparedStatement ps;
+            ResultSet rs;
+
+            //modificar segun la cantidad de datos.
+            int numFilaDatos = 7;
+            
+            CellStyle datosEstilo = book.createCellStyle();
+            datosEstilo.setBorderBottom(BorderStyle.THIN);
+            datosEstilo.setBorderLeft(BorderStyle.THIN);
+            datosEstilo.setBorderRight(BorderStyle.THIN);
+            datosEstilo.setBorderBottom(BorderStyle.THIN);
+            
+            ps = conn.prepareStatement("SELECT id, nombre, precio, cantidad, total, fecha, tarjeta FROM ventasgeneral");
+            rs = ps.executeQuery();
+
+            int numCol = rs.getMetaData().getColumnCount();
+
+            while (rs.next()) {
+                Row filaDatos = sheet.createRow(numFilaDatos);
+
+                for (int a = 0; a < numCol; a++) {
+
+                    Cell CeldaDatos = filaDatos.createCell(a);
+                    CeldaDatos.setCellStyle(datosEstilo);
+                    if(a == 0){
+                        CeldaDatos.setCellValue(rs.getInt("id"));
+                    }else if (a == 2 || a == 3 || a == 4){
+                        CeldaDatos.setCellValue(rs.getDouble(a + 1));
+                    }
+                    else if(a == 1){
+                        CeldaDatos.setCellValue(rs.getString("nombre"));
+                    }
+                    else{
+                        CeldaDatos.setCellValue(rs.getString(a + 1));
+                    }
+                }
+
+
+
+//                Cell celdaImporte = filaDatos.createCell(4);
+//                celdaImporte.setCellStyle(datosEstilo);
+//                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
+
+                numFilaDatos++;
+
+            }
+            sheet.autoSizeColumn(0);
+            sheet.autoSizeColumn(1);
+            sheet.autoSizeColumn(2);
+            sheet.autoSizeColumn(3);
+            sheet.autoSizeColumn(4);
+
+            sheet.setZoom(150);
+
+            FileOutputStream fileOut = new FileOutputStream("ReporteVentasGeneral.xlsx");
+            book.write(fileOut);
+            fileOut.close();
+            JOptionPane.showMessageDialog(null, "Reporte de Ventas guardado");
+
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+
+    
     public void actualizarFecha(){
         Calendar fechaActual = new GregorianCalendar();
         jDateChooserFechaProductos.setCalendar(fechaActual);
@@ -302,14 +439,6 @@ public class VentasAdmin extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jButtonSalir = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanelVentasGeneral = new javax.swing.JPanel();
-        jTextFieldCantidadProductos = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTableVentasGeneral = new javax.swing.JTable();
-        jComboBoxProductos = new javax.swing.JComboBox<>();
-        jButtonConfirmarVentaProductos = new javax.swing.JButton();
-        jRadioButtonTarjetaProductos = new javax.swing.JRadioButton();
-        jDateChooserFechaProductos = new com.toedter.calendar.JDateChooser();
         jPanelVentasHelados = new javax.swing.JPanel();
         jTextFieldCantidadHelados = new javax.swing.JTextField();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -318,6 +447,15 @@ public class VentasAdmin extends javax.swing.JFrame {
         jButtonConfirmarVentaHelados = new javax.swing.JButton();
         jRadioButtonTarjetaHelados = new javax.swing.JRadioButton();
         jDateChooserFechaHelados = new com.toedter.calendar.JDateChooser();
+        jPanelVentasGeneral = new javax.swing.JPanel();
+        jTextFieldCantidadProductos = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTableVentasGeneral = new javax.swing.JTable();
+        jComboBoxProductos = new javax.swing.JComboBox<>();
+        jButtonConfirmarVentaProductos = new javax.swing.JButton();
+        jRadioButtonTarjetaProductos = new javax.swing.JRadioButton();
+        jDateChooserFechaProductos = new com.toedter.calendar.JDateChooser();
+        jButtonReportesVentasGeneral = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -359,89 +497,6 @@ public class VentasAdmin extends javax.swing.JFrame {
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 6, Short.MAX_VALUE))
         );
-
-        jPanelVentasGeneral.setBackground(new java.awt.Color(51, 51, 51));
-        jPanelVentasGeneral.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-
-        jTextFieldCantidadProductos.setForeground(java.awt.Color.lightGray);
-        jTextFieldCantidadProductos.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldCantidadProductos.setText("Cantidad: gramos o unidad");
-        jTextFieldCantidadProductos.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTextFieldCantidadProductosMouseClicked(evt);
-            }
-        });
-        jTextFieldCantidadProductos.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                jTextFieldCantidadProductosKeyTyped(evt);
-            }
-        });
-
-        jTableVentasGeneral.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        jTableVentasGeneral.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTableVentasGeneralMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(jTableVentasGeneral);
-
-        jComboBoxProductos.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Factura", "Criollos", "Medias Lunas", "Palmeritas" }));
-
-        jButtonConfirmarVentaProductos.setText("Confirmar");
-        jButtonConfirmarVentaProductos.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonConfirmarVentaProductosActionPerformed(evt);
-            }
-        });
-
-        jRadioButtonTarjetaProductos.setText("Tarjeta");
-
-        jDateChooserFechaProductos.setDateFormatString("yyyy/MM/dd HH:mm:ss");
-
-        javax.swing.GroupLayout jPanelVentasGeneralLayout = new javax.swing.GroupLayout(jPanelVentasGeneral);
-        jPanelVentasGeneral.setLayout(jPanelVentasGeneralLayout);
-        jPanelVentasGeneralLayout.setHorizontalGroup(
-            jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelVentasGeneralLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addGroup(jPanelVentasGeneralLayout.createSequentialGroup()
-                        .addComponent(jComboBoxProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
-                        .addComponent(jTextFieldCantidadProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jRadioButtonTarjetaProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jDateChooserFechaProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButtonConfirmarVentaProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        jPanelVentasGeneralLayout.setVerticalGroup(
-            jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelVentasGeneralLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jDateChooserFechaProductos, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jComboBoxProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jTextFieldCantidadProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jRadioButtonTarjetaProductos))
-                    .addComponent(jButtonConfirmarVentaProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 608, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        jTabbedPane1.addTab("VentasGeneral", jPanelVentasGeneral);
 
         jTextFieldCantidadHelados.setForeground(java.awt.Color.lightGray);
         jTextFieldCantidadHelados.setHorizontalAlignment(javax.swing.JTextField.CENTER);
@@ -524,6 +579,100 @@ public class VentasAdmin extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("VentasHelados", jPanelVentasHelados);
 
+        jPanelVentasGeneral.setBackground(new java.awt.Color(51, 51, 51));
+        jPanelVentasGeneral.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        jTextFieldCantidadProductos.setForeground(java.awt.Color.lightGray);
+        jTextFieldCantidadProductos.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jTextFieldCantidadProductos.setText("Cantidad: gramos o unidad");
+        jTextFieldCantidadProductos.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTextFieldCantidadProductosMouseClicked(evt);
+            }
+        });
+        jTextFieldCantidadProductos.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                jTextFieldCantidadProductosKeyTyped(evt);
+            }
+        });
+
+        jTableVentasGeneral.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jTableVentasGeneral.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTableVentasGeneralMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(jTableVentasGeneral);
+
+        jComboBoxProductos.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Factura", "Criollos", "Medias Lunas", "Palmeritas" }));
+
+        jButtonConfirmarVentaProductos.setText("Confirmar");
+        jButtonConfirmarVentaProductos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonConfirmarVentaProductosActionPerformed(evt);
+            }
+        });
+
+        jRadioButtonTarjetaProductos.setText("Tarjeta");
+
+        jDateChooserFechaProductos.setDateFormatString("yyyy/MM/dd HH:mm:ss");
+
+        jButtonReportesVentasGeneral.setText("Reportes");
+        jButtonReportesVentasGeneral.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonReportesVentasGeneralActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelVentasGeneralLayout = new javax.swing.GroupLayout(jPanelVentasGeneral);
+        jPanelVentasGeneral.setLayout(jPanelVentasGeneralLayout);
+        jPanelVentasGeneralLayout.setHorizontalGroup(
+            jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelVentasGeneralLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jTextFieldCantidadProductos)
+                        .addComponent(jComboBoxProductos, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jRadioButtonTarjetaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jDateChooserFechaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
+                        .addComponent(jButtonConfirmarVentaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jButtonReportesVentasGeneral, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 918, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanelVentasGeneralLayout.setVerticalGroup(
+            jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelVentasGeneralLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanelVentasGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelVentasGeneralLayout.createSequentialGroup()
+                        .addComponent(jComboBoxProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextFieldCantidadProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jRadioButtonTarjetaProductos)
+                        .addGap(18, 18, 18)
+                        .addComponent(jDateChooserFechaProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButtonConfirmarVentaProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(383, 383, 383)
+                        .addComponent(jButtonReportesVentasGeneral)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("VentasGeneral", jPanelVentasGeneral);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -596,10 +745,24 @@ public class VentasAdmin extends javax.swing.JFrame {
         actualizarProductos();
     }//GEN-LAST:event_jButtonConfirmarVentaHeladosActionPerformed
 
+    private void jButtonReportesVentasGeneralActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReportesVentasGeneralActionPerformed
+        try {
+            reporte();
+            actualizarProductos();
+        } catch (SQLException | IOException ex) {
+            Logger.getLogger(VentasAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }//GEN-LAST:event_jButtonReportesVentasGeneralActionPerformed
+
+    public static void main(String[] args) throws SQLException, IOException {
+        reporte();
+    }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonConfirmarVentaHelados;
     private javax.swing.JButton jButtonConfirmarVentaProductos;
+    private javax.swing.JButton jButtonReportesVentasGeneral;
     private javax.swing.JButton jButtonSalir;
     private javax.swing.JComboBox<String> jComboBoxHelados;
     private javax.swing.JComboBox<String> jComboBoxProductos;
