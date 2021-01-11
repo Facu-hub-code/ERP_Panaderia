@@ -22,11 +22,14 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 /**
  *
@@ -52,84 +55,98 @@ public class StockAdmin extends javax.swing.JFrame {
      * Metodos funcionales.
      */
     
-    private static void reporteStock() throws SQLException, FileNotFoundException, IOException {
+    private static void reporte() throws SQLException, FileNotFoundException, IOException {
 
-        Workbook book = new XSSFWorkbook(); //se crea un libro
-        Sheet sheet = book.createSheet("Productos"); //se crea una hoja de calculos llamada "Productos"
+        //Se crea una hoja de calculos.
+        Workbook book = new XSSFWorkbook();
+        Sheet sheet = book.createSheet("Productos");
 
         try {
-            //se crean las cabeceras de la tabla en un arreglo de strings
-            String[] cabecera = new String[]{"id", "nombre", "cantidad", "precio"}; //luego probar con otros nombres
-            
-            
-//            CellStyle headerStyle = book.createCellStyle();
-//            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
-//            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-//            headerStyle.setBorderBottom(BorderStyle.THIN);
-//            headerStyle.setBorderLeft(BorderStyle.THIN);
-//            headerStyle.setBorderRight(BorderStyle.THIN);
-//            headerStyle.setBorderBottom(BorderStyle.THIN);
+            // <editor-fold defaultstate="collapsed" desc="Estilo de la hoja de calculos"> 
+            //Se crea y se maquilla la celda del titulo.
+            CellStyle tituloEstilo = book.createCellStyle();
+            //Se centra el texto.
+            tituloEstilo.setAlignment(HorizontalAlignment.CENTER);
+            tituloEstilo.setVerticalAlignment(VerticalAlignment.CENTER);
+            //Establece el estilo de la fuente.
+            Font fuenteTitulo = book.createFont();
+            fuenteTitulo.setFontName("Arial");
+            fuenteTitulo.setBold(true);
+            fuenteTitulo.setFontHeightInPoints((short) 14);
+            tituloEstilo.setFont(fuenteTitulo);
+            //Crea una fila para los titulos.
+            Row filaTitulo = sheet.createRow(1);
+            Cell celdaTitulo = filaTitulo.createCell(1);
+            celdaTitulo.setCellStyle(tituloEstilo);
+            celdaTitulo.setCellValue("Reporte de Productos");
+            sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3)); //resize
 
-//            Font font = book.createFont();
-//            font.setFontName("Arial");
-//            font.setBold(true);
-//            font.setColor(IndexedColors.WHITE.getIndex());
-//            font.setFontHeightInPoints((short) 12);
-//            headerStyle.setFont(font);
+            //se crean las cabeceras de la tabla
+            String[] cabecera = new String[]{"Id", "Nombre", "Cantidad", "Precio"};
 
-            Row filaEncabezados = sheet.createRow(4);
+            CellStyle headerStyle = book.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+            Font font = book.createFont();
+            font.setFontName("Arial");
+            font.setBold(true);
+            font.setColor(IndexedColors.WHITE.getIndex());
+            font.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(font);
+
+            Row filaEncabezados = sheet.createRow(3);
 
             for (int i = 0; i < cabecera.length; i++) {
                 Cell celdaEnzabezado = filaEncabezados.createCell(i);
-//                celdaEnzabezado.setCellStyle(headerStyle);
+                celdaEnzabezado.setCellStyle(headerStyle);
                 celdaEnzabezado.setCellValue(cabecera[i]);
-            }
-            //tooooodo eso para crar las cabeceras de las tablas
-
+            }//</editor-fold> 
             
-            
-            //ahora vamos a llenar la tabla desde la base de datos
             Connection conn = Conexion.conectar();
+            PreparedStatement ps;
+            ResultSet rs;
+
+            int numFilaDatos = 4;
             
-            int numFilaDatos = 4; //cantidad de filas de datos
+            // <editor-fold defaultstate="collapsed" desc="Estilo de la celda"> 
+            CellStyle datosEstilo = book.createCellStyle();
+            datosEstilo.setBorderBottom(BorderStyle.THIN);
+            datosEstilo.setBorderLeft(BorderStyle.THIN);
+            datosEstilo.setBorderRight(BorderStyle.THIN);
+            datosEstilo.setBorderBottom(BorderStyle.THIN);
+            //</editor-fold>
+            
+            ps = conn.prepareStatement("SELECT id, nombre, cantidad, precio FROM stock");
+            rs = ps.executeQuery();
 
-//            CellStyle datosEstilo = book.createCellStyle();
-//            datosEstilo.setBorderBottom(BorderStyle.THIN);
-//            datosEstilo.setBorderLeft(BorderStyle.THIN);
-//            datosEstilo.setBorderRight(BorderStyle.THIN);
-//            datosEstilo.setBorderBottom(BorderStyle.THIN);
-
-            PreparedStatement ps = conn.prepareStatement("SELECT id, nombre, cantidad, precio FROM stock");
-            ResultSet rs = ps.executeQuery();
-
-            int numCol = rs.getMetaData().getColumnCount(); //numero de columnas de la bdd.
+            int numCol = rs.getMetaData().getColumnCount();
 
             while (rs.next()) {
-                Row filaDatos = sheet.createRow(numFilaDatos); //crea una fila por cada tipo de dato.
+                Row filaDatos = sheet.createRow(numFilaDatos);
 
-                for (int i = 1; i < numCol; i++) {
+                for (int a = 0; a < numCol; a++) {
 
-                    Cell CeldaDatos = filaDatos.createCell(i); //crea una celda
-//                    CeldaDatos.setCellStyle(datosEstilo);
+                    Cell CeldaDatos = filaDatos.createCell(a);
+                    CeldaDatos.setCellStyle(datosEstilo);
 
-                    if (i == 1) {
-                        CeldaDatos.setCellValue(rs.getInt("id")); //obtiene el id de la bdd.
-                    } else if(i == 2){
-                        CeldaDatos.setCellValue(rs.getString("nombre")); //obtiene el nombre de la bbd.
-                    }
-                    else {
-                        CeldaDatos.setCellValue(rs.getDouble(i));
+                    if (a == 2 || a == 3) {
+                        CeldaDatos.setCellValue(rs.getDouble(a + 1));
+                    } else {
+                        CeldaDatos.setCellValue(rs.getString(a + 1));
                     }
                 }
-                // TODO ver celda importes
 //                Cell celdaImporte = filaDatos.createCell(4);
 //                celdaImporte.setCellStyle(datosEstilo);
 //                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
 
-                numFilaDatos++; //TODO ver
+                numFilaDatos++;
 
             }
-            
             sheet.autoSizeColumn(0);
             sheet.autoSizeColumn(1);
             sheet.autoSizeColumn(2);
@@ -138,14 +155,13 @@ public class StockAdmin extends javax.swing.JFrame {
 
             sheet.setZoom(150);
 
-            FileOutputStream fileOut = new FileOutputStream("ReporteStock.xlsx");
+            FileOutputStream fileOut = new FileOutputStream("ReporteProductos.xlsx");
             book.write(fileOut);
             fileOut.close();
-            conn.close();
+
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, e.toString());
         }
-        
     }
     
     public void filtrarDatos(String valor) {
@@ -572,21 +588,16 @@ public class StockAdmin extends javax.swing.JFrame {
 
     private void jButtonReporteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReporteActionPerformed
         try {
-            reporteStock();
-        } catch (SQLException ex) {
-            Logger.getLogger(StockAdmin.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+            reporte();
+            actualizarStock();
+        } catch (SQLException | IOException ex) {
             Logger.getLogger(StockAdmin.class.getName()).log(Level.SEVERE, null, ex);
         }
-        actualizarStock();
     }//GEN-LAST:event_jButtonReporteActionPerformed
 
-    
-    
     public static void main(String[] args) throws SQLException, IOException {
-        reporteStock();
+        reporte();
     }
-    
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

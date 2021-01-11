@@ -7,6 +7,9 @@ package Ventanas;
 
 import Conexion.Conexion;
 import com.toedter.calendar.JDateChooserBeanInfo;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +19,19 @@ import java.util.GregorianCalendar;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -43,6 +59,116 @@ public class CajaAdmin extends javax.swing.JFrame {
     /**
      * Metodos funcionales.
      */
+    
+    private static void reporte() throws SQLException, FileNotFoundException, IOException {
+
+        //Se crea una hoja de calculos.
+        Workbook book = new XSSFWorkbook();
+        Sheet sheet = book.createSheet("Caja");
+
+        try {
+            // <editor-fold defaultstate="collapsed" desc="Estilo de la hoja de calculos"> 
+            //Se crea y se maquilla la celda del titulo.
+            CellStyle tituloEstilo = book.createCellStyle();
+            //Se centra el texto.
+            tituloEstilo.setAlignment(HorizontalAlignment.CENTER);
+            tituloEstilo.setVerticalAlignment(VerticalAlignment.CENTER);
+            //Establece el estilo de la fuente.
+            Font fuenteTitulo = book.createFont();
+            fuenteTitulo.setFontName("Arial");
+            fuenteTitulo.setBold(true);
+            fuenteTitulo.setFontHeightInPoints((short) 14);
+            tituloEstilo.setFont(fuenteTitulo);
+            //Crea una fila para los titulos.
+            Row filaTitulo = sheet.createRow(1);
+            Cell celdaTitulo = filaTitulo.createCell(1);
+            celdaTitulo.setCellStyle(tituloEstilo);
+            celdaTitulo.setCellValue("Reporte de Caja");
+            sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3)); //resize
+
+            //se crean las cabeceras de la tabla
+            String[] cabecera = new String[]{"Id", "Fecha", "Monto", "Concepto", "Usuario"};
+
+            CellStyle headerStyle = book.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+            Font font = book.createFont();
+            font.setFontName("Arial");
+            font.setBold(true);
+            font.setColor(IndexedColors.WHITE.getIndex());
+            font.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(font);
+            //cambiar segun cantidad de datos
+            Row filaEncabezados = sheet.createRow(4);
+
+            for (int i = 0; i < cabecera.length; i++) {
+                Cell celdaEnzabezado = filaEncabezados.createCell(i);
+                celdaEnzabezado.setCellStyle(headerStyle);
+                celdaEnzabezado.setCellValue(cabecera[i]);
+            }//</editor-fold> 
+            
+            Connection conn = Conexion.conectar();
+            PreparedStatement ps;
+            ResultSet rs;
+
+            int numFilaDatos = 4;
+            
+            // <editor-fold defaultstate="collapsed" desc="Estilo de la celda"> 
+            CellStyle datosEstilo = book.createCellStyle();
+            datosEstilo.setBorderBottom(BorderStyle.THIN);
+            datosEstilo.setBorderLeft(BorderStyle.THIN);
+            datosEstilo.setBorderRight(BorderStyle.THIN);
+            datosEstilo.setBorderBottom(BorderStyle.THIN);
+            //</editor-fold>
+            
+            ps = conn.prepareStatement("SELECT id, fecha, monto, concepto, usuario FROM caja");
+            rs = ps.executeQuery();
+
+            int numCol = rs.getMetaData().getColumnCount();
+
+            while (rs.next()) {
+                Row filaDatos = sheet.createRow(numFilaDatos);
+
+                for (int a = 0; a < numCol; a++) {
+
+                    Cell CeldaDatos = filaDatos.createCell(a);
+                    CeldaDatos.setCellStyle(datosEstilo);
+
+                    if (a == 2 || a == 3) {
+                        CeldaDatos.setCellValue(rs.getDouble(a + 1));
+                    } else {
+                        CeldaDatos.setCellValue(rs.getString(a + 1));
+                    }
+                }
+//                Cell celdaImporte = filaDatos.createCell(4);
+//                celdaImporte.setCellStyle(datosEstilo);
+//                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
+
+                numFilaDatos++;
+
+            }
+            sheet.autoSizeColumn(0);
+            sheet.autoSizeColumn(1);
+            sheet.autoSizeColumn(2);
+            sheet.autoSizeColumn(3);
+            sheet.autoSizeColumn(4);
+
+            sheet.setZoom(150);
+
+            FileOutputStream fileOut = new FileOutputStream("ReporteProductos.xlsx");
+            book.write(fileOut);
+            fileOut.close();
+
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+    
     public void actualizarFecha() {
         Calendar fechaActual = new GregorianCalendar();
         jDateChooserFecha.setCalendar(fechaActual);
@@ -236,6 +362,11 @@ public class CajaAdmin extends javax.swing.JFrame {
         jComboBoxConcepto.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Ingreso", "Egreso" }));
 
         jButtonActualizar1.setText("Reporte");
+        jButtonActualizar1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonActualizar1ActionPerformed(evt);
+            }
+        });
 
         jLabelTotal.setBackground(new java.awt.Color(255, 255, 255));
         jLabelTotal.setFont(new java.awt.Font("Lucida Grande", 1, 18)); // NOI18N
@@ -363,6 +494,11 @@ public class CajaAdmin extends javax.swing.JFrame {
         int filaSelec = jTableCaja.rowAtPoint(evt.getPoint());
         ID = jTableCaja.getValueAt(filaSelec, 0).toString();
     }//GEN-LAST:event_jTableCajaMouseClicked
+
+    private void jButtonActualizar1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonActualizar1ActionPerformed
+        reporte();
+        actualizar();
+    }//GEN-LAST:event_jButtonActualizar1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
