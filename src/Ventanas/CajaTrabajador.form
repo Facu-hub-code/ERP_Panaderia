@@ -146,9 +146,7 @@
                       <Component id="jComboBoxConcepto" alignment="1" max="32767" attributes="0"/>
                       <Component id="jButtonAgregar" alignment="0" max="32767" attributes="0"/>
                       <Component id="jButtonActualizar1" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jButtonActualizar" alignment="0" max="32767" attributes="0"/>
                       <Component id="jLabelTotal" max="32767" attributes="0"/>
-                      <Component id="jButtonModificar" alignment="1" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="jScrollPane1" pref="830" max="32767" attributes="0"/>
@@ -168,14 +166,10 @@
                           <Component id="jComboBoxConcepto" min="-2" pref="30" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Component id="jDateChooserFecha" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="32767" attributes="0"/>
-                          <Component id="jButtonModificar" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Component id="jButtonAgregar" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                           <Component id="jButtonActualizar1" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="jButtonActualizar" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Component id="jLabelTotal" min="-2" pref="35" max="-2" attributes="0"/>
                       </Group>
@@ -208,14 +202,6 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonAgregarActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="jButtonActualizar">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Actualizar"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonActualizarActionPerformed"/>
           </Events>
         </Component>
         <Container class="javax.swing.JScrollPane" name="jScrollPane1">
@@ -280,14 +266,6 @@
           <Properties>
             <Property name="dateFormatString" type="java.lang.String" value="yyyy/MM/dd HH:mm:ss"/>
           </Properties>
-        </Component>
-        <Component class="javax.swing.JButton" name="jButtonModificar">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Modificar"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonModificarActionPerformed"/>
-          </Events>
         </Component>
       </SubComponents>
     </Container>

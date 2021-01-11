@@ -138,14 +138,12 @@ public class CajaTrabajador extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jTextFieldMonto = new javax.swing.JTextField();
         jButtonAgregar = new javax.swing.JButton();
-        jButtonActualizar = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTableCaja = new javax.swing.JTable();
         jComboBoxConcepto = new javax.swing.JComboBox<>();
         jButtonActualizar1 = new javax.swing.JButton();
         jLabelTotal = new javax.swing.JLabel();
         jDateChooserFecha = new com.toedter.calendar.JDateChooser();
-        jButtonModificar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -218,13 +216,6 @@ public class CajaTrabajador extends javax.swing.JFrame {
             }
         });
 
-        jButtonActualizar.setText("Actualizar");
-        jButtonActualizar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonActualizarActionPerformed(evt);
-            }
-        });
-
         jTableCaja.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -253,13 +244,6 @@ public class CajaTrabajador extends javax.swing.JFrame {
 
         jDateChooserFecha.setDateFormatString("yyyy/MM/dd HH:mm:ss");
 
-        jButtonModificar.setText("Modificar");
-        jButtonModificar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonModificarActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -272,9 +256,7 @@ public class CajaTrabajador extends javax.swing.JFrame {
                     .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonActualizar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonActualizar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 830, Short.MAX_VALUE)
                 .addContainerGap())
@@ -291,14 +273,10 @@ public class CajaTrabajador extends javax.swing.JFrame {
                         .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(jDateChooserFecha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButtonModificar)
                         .addGap(18, 18, 18)
                         .addComponent(jButtonAgregar)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButtonActualizar1)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButtonActualizar)
                         .addGap(18, 18, 18)
                         .addComponent(jLabelTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -332,6 +310,8 @@ public class CajaTrabajador extends javax.swing.JFrame {
      * Funcionalidad
      */
     private void jButtonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSalirActionPerformed
+        SistemaTrabajador sistTrabajador = new SistemaTrabajador(correo);
+        sistTrabajador.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_jButtonSalirActionPerformed
 
@@ -344,34 +324,12 @@ public class CajaTrabajador extends javax.swing.JFrame {
         actualizar();
     }//GEN-LAST:event_jButtonAgregarActionPerformed
 
-    private void jButtonActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonActualizarActionPerformed
-        actualizar();
-    }//GEN-LAST:event_jButtonActualizarActionPerformed
-
     private void jTextFieldMontoKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldMontoKeyTyped
         char c = evt.getKeyChar();
         if (c < '0' || c > '9')
             evt.consume();
     }//GEN-LAST:event_jTextFieldMontoKeyTyped
-
-    private void jButtonModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonModificarActionPerformed
-        try {
-            Connection conn = Conexion.conectar();
-            //ID: 1-fecha 2-monto 3-concepto 4-usuario
-            PreparedStatement ps = conn.prepareStatement("UPDATE caja SET "
-                    + "fecha = ?, monto = ?, concepto = ?, usuario = ? WHERE ID ='" + ID + "'");
-            ps.setString(1, ((JTextField) jDateChooserFecha.getDateEditor().getUiComponent()).getText());
-            ps.setDouble(2, Double.parseDouble(jTextFieldMonto.getText().trim())); 
-            ps.setString(3, jComboBoxConcepto.getSelectedItem().toString());
-            ps.setString(4, ""+correo);
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Modificacion exitosa");
-            conn.close();
-            actualizar();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-    }//GEN-LAST:event_jButtonModificarActionPerformed
-    }
+    
     private void jTableCajaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableCajaMouseClicked
         int filaSelec = jTableCaja.rowAtPoint(evt.getPoint());
         ID = jTableCaja.getValueAt(filaSelec, 0).toString();
@@ -379,10 +337,8 @@ public class CajaTrabajador extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButtonActualizar;
     private javax.swing.JButton jButtonActualizar1;
     private javax.swing.JButton jButtonAgregar;
-    private javax.swing.JButton jButtonModificar;
     private javax.swing.JButton jButtonSalir;
     private javax.swing.JComboBox<String> jComboBoxConcepto;
     private com.toedter.calendar.JDateChooser jDateChooserFecha;
