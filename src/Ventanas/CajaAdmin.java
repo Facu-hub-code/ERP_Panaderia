@@ -470,7 +470,7 @@ public class CajaAdmin extends javax.swing.JFrame {
 
     private void jTextFieldMontoKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldMontoKeyTyped
         char c = evt.getKeyChar();
-        if (c < '0' || c > '9')
+        if (c < '0' || c > '9' || c == '.')
             evt.consume();
     }//GEN-LAST:event_jTextFieldMontoKeyTyped
 

@@ -36,7 +36,7 @@ public class SistemaAdministrador extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         btn_Salir = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
-        jButtonEstadisticas = new javax.swing.JButton();
+        jButtonReportes = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jButtonCaja = new javax.swing.JButton();
@@ -88,10 +88,10 @@ public class SistemaAdministrador extends javax.swing.JFrame {
         jPanel2.setBackground(new java.awt.Color(51, 51, 51));
         jPanel2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
-        jButtonEstadisticas.setText("Estadisticas");
-        jButtonEstadisticas.addActionListener(new java.awt.event.ActionListener() {
+        jButtonReportes.setText("Reportes");
+        jButtonReportes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonEstadisticasActionPerformed(evt);
+                jButtonReportesActionPerformed(evt);
             }
         });
 
@@ -132,7 +132,7 @@ public class SistemaAdministrador extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButtonEstadisticas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jButtonReportes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -167,7 +167,7 @@ public class SistemaAdministrador extends javax.swing.JFrame {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButtonEstadisticas, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jButtonReportes, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -195,9 +195,9 @@ public class SistemaAdministrador extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButtonEstadisticasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonEstadisticasActionPerformed
+    private void jButtonReportesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReportesActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButtonEstadisticasActionPerformed
+    }//GEN-LAST:event_jButtonReportesActionPerformed
 
     private void jButtonCajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCajaActionPerformed
         this.dispose();
@@ -262,7 +262,7 @@ public class SistemaAdministrador extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_Salir;
     private javax.swing.JButton jButtonCaja;
-    private javax.swing.JButton jButtonEstadisticas;
+    private javax.swing.JButton jButtonReportes;
     private javax.swing.JButton jButtonStock;
     private javax.swing.JButton jButtonVentas;
     private javax.swing.JLabel jLabel1;
