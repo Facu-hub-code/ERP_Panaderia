@@ -196,7 +196,9 @@ public class SistemaAdministrador extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButtonReportesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReportesActionPerformed
-        // TODO add your handling code here:
+        ReporteAdministrador repAdmin = new ReporteAdministrador();
+        this.dispose();
+        repAdmin.setVisible(true);
     }//GEN-LAST:event_jButtonReportesActionPerformed
 
     private void jButtonCajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCajaActionPerformed
