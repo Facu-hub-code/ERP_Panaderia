@@ -109,6 +109,17 @@ public class Caja extends javax.swing.JFrame {
         }
     }
     
+    public void vaciarTablaCaja(){
+        try {
+            Connection cn = Conexion.conectar();
+        PreparedStatement ps = cn.prepareStatement("TRUNCATE TABLE caja");
+        if(ps.execute()) JOptionPane.showMessageDialog(null, "Tabla Caja vacia, agregar dinero para el sgte turno");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+        
+    }
+    
     /**
      * Crea un nuevo reporte en formato .xlxs ingresando en cada celda el valor
      * correspondiente que se encuentre en la tabla "caja" de la base de datos
@@ -220,7 +231,7 @@ public class Caja extends javax.swing.JFrame {
             Date fecha = new Date();
             String F = sdf.format(fecha);
 
-            FileOutputStream fileOut = new FileOutputStream("" + F + ".xlsx");
+            FileOutputStream fileOut = new FileOutputStream("Caja: " + F + ".xlsx");
             book.write(fileOut);
             fileOut.close();
             JOptionPane.showMessageDialog(null, "Reporte guardado con el nombre de la fecha.");
@@ -349,13 +360,12 @@ public class Caja extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTableCaja = new javax.swing.JTable();
         jComboBoxConcepto = new javax.swing.JComboBox<>();
-        jButtonActualizar1 = new javax.swing.JButton();
+        jButtonReporte = new javax.swing.JButton();
         jLabelTotal = new javax.swing.JLabel();
         jDateChooserFecha = new com.toedter.calendar.JDateChooser();
         jButtonModificar = new javax.swing.JButton();
         jLabelDinero = new javax.swing.JLabel();
         jRadioButtonEfectivo = new javax.swing.JRadioButton();
-        jTextFieldNext = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -439,10 +449,10 @@ public class Caja extends javax.swing.JFrame {
         jComboBoxConcepto.setFont(new java.awt.Font("Lucida Grande", 0, 12)); // NOI18N
         jComboBoxConcepto.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Ingreso", "Egreso" }));
 
-        jButtonActualizar1.setText("Reporte");
-        jButtonActualizar1.addActionListener(new java.awt.event.ActionListener() {
+        jButtonReporte.setText("Reporte");
+        jButtonReporte.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonActualizar1ActionPerformed(evt);
+                jButtonReporteActionPerformed(evt);
             }
         });
 
@@ -469,21 +479,6 @@ public class Caja extends javax.swing.JFrame {
 
         jRadioButtonEfectivo.setText("Efectivo");
 
-        jTextFieldNext.setFont(new java.awt.Font("Lucida Grande", 0, 12)); // NOI18N
-        jTextFieldNext.setForeground(java.awt.Color.lightGray);
-        jTextFieldNext.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldNext.setText("Dinero para el sgte turno.");
-        jTextFieldNext.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTextFieldNextMouseClicked(evt);
-            }
-        });
-        jTextFieldNext.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                jTextFieldNextKeyTyped(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -491,21 +486,19 @@ public class Caja extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jTextFieldMonto)
-                        .addComponent(jDateChooserFecha, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabelDinero, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jRadioButtonEfectivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jTextFieldNext, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jButtonActualizar1, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 841, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jButtonAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jTextFieldMonto)
+                            .addComponent(jDateChooserFecha, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabelDinero, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jRadioButtonEfectivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButtonModificar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jButtonReporte, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -523,14 +516,12 @@ public class Caja extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jRadioButtonEfectivo)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButtonModificar)
+                        .addComponent(jButtonModificar, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jButtonAgregar)
+                        .addComponent(jButtonAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jButtonActualizar1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextFieldNext, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButtonReporte)
+                        .addGap(61, 61, 61)
                         .addComponent(jLabelTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabelDinero, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -601,33 +592,21 @@ public class Caja extends javax.swing.JFrame {
         ID = jTableCaja.getValueAt(filaSelec, 0).toString();
     }//GEN-LAST:event_jTableCajaMouseClicked
 
-    private void jButtonActualizar1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonActualizar1ActionPerformed
+    private void jButtonReporteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReporteActionPerformed
         try {
             reporte();
         } catch (SQLException | IOException ex) {
             Logger.getLogger(Caja.class.getName()).log(Level.SEVERE, null, ex);
         }
+        vaciarTablaCaja();
         actualizar();
-    }//GEN-LAST:event_jButtonActualizar1ActionPerformed
-
-    private void jTextFieldNextMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldNextMouseClicked
-        jTextFieldMonto.setText("");
-    }//GEN-LAST:event_jTextFieldNextMouseClicked
-
-    private void jTextFieldNextKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldNextKeyTyped
-        char c = evt.getKeyChar();
-        if (c != '.') {
-            if (c < '0' || c > '9') {
-                evt.consume();
-            }
-        }
-    }//GEN-LAST:event_jTextFieldNextKeyTyped
+    }//GEN-LAST:event_jButtonReporteActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButtonActualizar1;
     private javax.swing.JButton jButtonAgregar;
     private javax.swing.JButton jButtonModificar;
+    private javax.swing.JButton jButtonReporte;
     private javax.swing.JButton jButtonSalir;
     private javax.swing.JComboBox<String> jComboBoxConcepto;
     private com.toedter.calendar.JDateChooser jDateChooserFecha;
@@ -640,6 +619,5 @@ public class Caja extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTableCaja;
     private javax.swing.JTextField jTextFieldMonto;
-    private javax.swing.JTextField jTextFieldNext;
     // End of variables declaration//GEN-END:variables
 }
