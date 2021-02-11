@@ -6,12 +6,12 @@
 package Ventanas;
 
 import Conexion.Conexion;
-import java.awt.HeadlessException;
 import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
 /**
@@ -20,52 +20,67 @@ import javax.swing.JOptionPane;
  */
 public class Login extends javax.swing.JFrame {
 
+    //Declaro las variables String para el usuario y la pass.
     private static String correo = "";
     private static String pass = "";
+
     /**
-     * Creates new form Login
+     * Crea un nuevo form Login
      */
     public Login() {
         initComponents();
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Acceso al Sistema");
+        iniciarComboBox();
     }
+    
 
     //Metodos funcionales
+    
+    public void iniciarComboBox(){
+        jComboBoxCorreos.removeAllItems();
+        ArrayList<String> list = new ArrayList<String>();
+        try {
+            Connection cn = Conexion.conectar();
+            PreparedStatement ps = cn.prepareStatement("SELECT * FROM usuarios");
+            ResultSet rs = ps.executeQuery();
+            
+            while(rs.next()){
+                list.add(rs.getString("correo"));
+            }
+        } catch (Exception e) {
+        }
+        for(int i=0 ; i<list.size() ; i++){
+            jComboBoxCorreos.addItem(list.get(i));
+        }
+        
+    }
+    
     public void validar() {
+        //Tomo los campos Usuario y pass de la interface.
         correo = jComboBoxCorreos.getSelectedItem().toString();
         pass = String.valueOf(txt_pass.getPassword());
-        if (!pass.equals("")) {
-            try {
-                Connection cn = Conexion.conectar();
-                PreparedStatement ps = cn.prepareStatement("SELECT nivel FROM usuarios"
-                        + " WHERE correo = '" + correo + "' AND password = '" + pass + "'");
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    String nivel = rs.getString("nivel");
-                    if (nivel.equalsIgnoreCase("Administrador")) {
-                        SistemaAdministrador sist = new SistemaAdministrador(correo);
-                        this.dispose();
-                        sist.setVisible(true);
-                    } else if (nivel.equalsIgnoreCase("Trabajador")) {
-                        SistemaTrabajador vent = new SistemaTrabajador(correo);
-                        this.dispose();
-                        vent.setVisible(true);
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Datos de acceso incorrectos");
-                        jComboBoxCorreos.setSelectedItem(null);
-                        txt_pass.setText("");
-                    }
-                }
-                cn.close();
-            } catch (HeadlessException | SQLException e) {
-                JOptionPane.showMessageDialog(null,e.toString());
+
+        try {
+            Connection cn = Conexion.conectar();
+            PreparedStatement ps = cn.prepareStatement("SELECT * FROM usuarios"
+                    + " WHERE correo = '" + correo + "' AND password = '" + pass + "'");
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                SistemaPrincipal sist = new SistemaPrincipal(correo);
+                sist.setVisible(true);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(null, "Datos de acceso incorrectos");
+                jComboBoxCorreos.setSelectedItem(null);
+                txt_pass.setText("");
             }
-        } else {
-            JOptionPane.showMessageDialog(null, "Ingrese una contraseña valida");
+        } catch (SQLException e) {
+            
         }
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -99,7 +114,7 @@ public class Login extends javax.swing.JFrame {
         jLabel5.setForeground(new java.awt.Color(0, 0, 0));
         jLabel5.setText("contraseña:");
 
-        jComboBoxCorreos.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "faculoren7@gmail.com", "juan@gmail.com" }));
+        jComboBoxCorreos.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "faculoren7@gmail.com" }));
 
         txt_pass.setText("jPasswordField1");
         txt_pass.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -180,12 +195,14 @@ public class Login extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    //Habilita el ingreso desde el teclado, mediante la tecla ENTER.
     private void txt_passKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_passKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             validar();
         }
     }//GEN-LAST:event_txt_passKeyPressed
 
+    //Limpia el campo de texto al hacer click.
     private void txt_passMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txt_passMouseClicked
         txt_pass.setText("");
     }//GEN-LAST:event_txt_passMouseClicked

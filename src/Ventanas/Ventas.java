@@ -39,7 +39,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * @author facundolorenzo
  */
-public class VentasAdmin extends javax.swing.JFrame {
+public class Ventas extends javax.swing.JFrame {
 
     private static String correo;
     private static Producto producto = new Producto();
@@ -47,7 +47,7 @@ public class VentasAdmin extends javax.swing.JFrame {
     /**
      * Creates new form SistemaVentasAdmin
      */
-    public VentasAdmin(String correo) {
+    public Ventas(String correo) {
         initComponents();
         setLocationRelativeTo(null);
         setTitle("Control de Ventas - Sistema Administrador - Panaderia Gloria");
@@ -215,37 +215,7 @@ public class VentasAdmin extends javax.swing.JFrame {
         }
     }
     
-    public void actualizarHelados() {
-        actualizarFecha();
-        DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("id");
-        model.addColumn("nombre");
-        model.addColumn("precio");
-        model.addColumn("cantidad");
-        model.addColumn("total");
-        model.addColumn("hora");
-        model.addColumn("tarjeta");
-        jTableVentasHelados.setModel(model);
-        String[] datos = new String[8];
-        Connection cn = Conexion.conectar();
-        try {
-            PreparedStatement ps = cn.prepareStatement("SELECT * FROM VentasHelado");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                datos[0] = rs.getString(1); //id
-                datos[1] = rs.getString(2); //nombre
-                datos[2] = rs.getDouble(3) + ""; //precio
-                datos[3] = rs.getDouble(4) + ""; //cantidad
-                datos[4] = rs.getDouble(5) + "";// total
-                datos[5] = rs.getDate(6).toString(); //fecha
-                datos[6] = rs.getBoolean(7) + ""; //tarjeta
-                model.addRow(datos);
-            }
-            cn.close();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
+    
 
     public void cargarProducto(){
         Connection cn = Conexion.conectar();
@@ -265,23 +235,7 @@ public class VentasAdmin extends javax.swing.JFrame {
         }
     }
     
-    public void cargarHelado(){
-        Connection cn = Conexion.conectar();
-        try {
-            PreparedStatement ps = cn.prepareStatement("SELECT * FROM stock WHERE nombre = ?");
-            ps.setString(1, jComboBoxHelados.getSelectedItem().toString());
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                producto.setId(rs.getInt("id"));
-                producto.setNombre(rs.getString("nombre"));
-                producto.setCantidad(rs.getDouble("cantidad"));
-                producto.setPrecio(rs.getDouble("precio"));
-            }
-            cn.close();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
+ 
     
     public void confirmarProducto() {
         //actualizarFecha();
@@ -295,17 +249,7 @@ public class VentasAdmin extends javax.swing.JFrame {
         
     }
     
-    public void confirmarHelado() {
-        actualizarFecha();
-        cargarHelado();
-        if(agregarMovimientoHelado() && modificarStockHelado()){
-            agregarVentaHelados();
-        }
-        else{
-            JOptionPane.showMessageDialog(null,"Error en la venta");
-        }
-        
-    }
+  
 
     public boolean modificarStockProducto(){
         try {
@@ -326,24 +270,6 @@ public class VentasAdmin extends javax.swing.JFrame {
         }
     }
     
-    public boolean modificarStockHelado(){
-        try {
-            String ID = String.valueOf(producto.getId());
-            Connection conn = Conexion.conectar();
-            PreparedStatement ps = conn.prepareStatement("UPDATE stock SET "
-                    + "nombre = ?, cantidad = ?, precio = ? WHERE ID ='" + ID + "'");
-            ps.setString(1, producto.getNombre()); //nombre
-            double cantidad = (producto.getCantidad())-(Double.parseDouble(jTextFieldCantidadHelados.getText().trim()));
-            ps.setDouble(2, cantidad); //cantidad
-            ps.setDouble(3,producto.getPrecio()); //precio
-            ps.executeUpdate();
-            conn.close();
-            return true;
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-            return false;
-        }
-    }
     
     public boolean agregarMovimientoProducto(){
         Connection conn = Conexion.conectar();
@@ -366,26 +292,7 @@ public class VentasAdmin extends javax.swing.JFrame {
         
     }
     
-    public boolean agregarMovimientoHelado(){
-        Connection conn = Conexion.conectar();
-        try {
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO caja VALUES(?,?,?,?,?)");
-            ps.setString(1, "0"); //id [int]
-            ps.setString(2, ((JTextField)jDateChooserFechaHelados.getDateEditor().getUiComponent()).getText()); //fecha [Date]
-            double monto = (Double.parseDouble(jTextFieldCantidadHelados.getText()))*(producto.getPrecio());
-            ps.setDouble(3, monto); //monto [double]
-            ps.setString(4, "Ingreso"); //concepto [varchar]
-            ps.setString(5, correo+"");//usuario [varchar]
-            ps.executeUpdate();
-            conn.close();
-            JOptionPane.showMessageDialog(null,"Movimiento Agregado");
-            return true;
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-            return false;
-        }
-        
-    }
+  
     
     public void agregarVentaProductos(){
         Connection conn = Conexion.conectar();
@@ -406,26 +313,7 @@ public class VentasAdmin extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, e.toString());
         }
     }
-    
-    public void agregarVentaHelados(){
-        Connection conn = Conexion.conectar();
-        try {
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO ventasHelado VALUES(?,?,?,?,?,?,?)");
-            ps.setString(1, "0");
-            ps.setString(2, producto.getNombre());
-            ps.setDouble(3, producto.getPrecio());
-            ps.setDouble(4, Double.parseDouble(jTextFieldCantidadHelados.getText().trim()));
-            double total = (Double.parseDouble(jTextFieldCantidadHelados.getText()))*(producto.getPrecio());
-            ps.setDouble(5, total);
-            ps.setString(6, ((JTextField)jDateChooserFechaHelados.getDateEditor().getUiComponent()).getText()); //fecha [Date]
-            ps.setBoolean(7, jRadioButtonTarjetaHelados.isSelected());
-            ps.executeUpdate();
-            conn.close();
-            JOptionPane.showMessageDialog(null,"Venta agregada correctamente");
-        } catch (NumberFormatException | SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
+   
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -439,14 +327,6 @@ public class VentasAdmin extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jButtonSalir = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanelVentasHelados = new javax.swing.JPanel();
-        jTextFieldCantidadHelados = new javax.swing.JTextField();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jTableVentasHelados = new javax.swing.JTable();
-        jComboBoxHelados = new javax.swing.JComboBox<>();
-        jButtonConfirmarVentaHelados = new javax.swing.JButton();
-        jRadioButtonTarjetaHelados = new javax.swing.JRadioButton();
-        jDateChooserFechaHelados = new com.toedter.calendar.JDateChooser();
         jPanelVentasGeneral = new javax.swing.JPanel();
         jTextFieldCantidadProductos = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -497,87 +377,6 @@ public class VentasAdmin extends javax.swing.JFrame {
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 6, Short.MAX_VALUE))
         );
-
-        jTextFieldCantidadHelados.setForeground(java.awt.Color.lightGray);
-        jTextFieldCantidadHelados.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jTextFieldCantidadHelados.setText("Cantidad: gramos o unidad");
-        jTextFieldCantidadHelados.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTextFieldCantidadHeladosMouseClicked(evt);
-            }
-        });
-        jTextFieldCantidadHelados.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                jTextFieldCantidadHeladosKeyTyped(evt);
-            }
-        });
-
-        jTableVentasHelados.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        jTableVentasHelados.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTableVentasHeladosMouseClicked(evt);
-            }
-        });
-        jScrollPane3.setViewportView(jTableVentasHelados);
-
-        jComboBoxHelados.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "HeladoVainilla", "HeladoFrutilla", "HeladoAlAgua", "HeladoChocolate" }));
-
-        jButtonConfirmarVentaHelados.setText("Confirmar");
-        jButtonConfirmarVentaHelados.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonConfirmarVentaHeladosActionPerformed(evt);
-            }
-        });
-
-        jRadioButtonTarjetaHelados.setText("Tarjeta");
-
-        jDateChooserFechaHelados.setDateFormatString("yyyy/MM/dd HH:mm:ss");
-
-        javax.swing.GroupLayout jPanelVentasHeladosLayout = new javax.swing.GroupLayout(jPanelVentasHelados);
-        jPanelVentasHelados.setLayout(jPanelVentasHeladosLayout);
-        jPanelVentasHeladosLayout.setHorizontalGroup(
-            jPanelVentasHeladosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelVentasHeladosLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanelVentasHeladosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanelVentasHeladosLayout.createSequentialGroup()
-                        .addComponent(jComboBoxHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTextFieldCantidadHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jRadioButtonTarjetaHelados)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jDateChooserFechaHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButtonConfirmarVentaHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 241, Short.MAX_VALUE))
-                    .addComponent(jScrollPane3))
-                .addContainerGap())
-        );
-        jPanelVentasHeladosLayout.setVerticalGroup(
-            jPanelVentasHeladosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelVentasHeladosLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanelVentasHeladosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jDateChooserFechaHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanelVentasHeladosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jComboBoxHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jTextFieldCantidadHelados, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jRadioButtonTarjetaHelados))
-                    .addComponent(jButtonConfirmarVentaHelados, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 612, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        jTabbedPane1.addTab("VentasHelados", jPanelVentasHelados);
 
         jPanelVentasGeneral.setBackground(new java.awt.Color(51, 51, 51));
         jPanelVentasGeneral.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -642,7 +441,7 @@ public class VentasAdmin extends javax.swing.JFrame {
                         .addComponent(jTextFieldCantidadProductos)
                         .addComponent(jComboBoxProductos, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jRadioButtonTarjetaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jDateChooserFechaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
+                        .addComponent(jDateChooserFechaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButtonConfirmarVentaProductos, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jButtonReportesVentasGeneral, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
@@ -699,19 +498,19 @@ public class VentasAdmin extends javax.swing.JFrame {
 
     private void jButtonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSalirActionPerformed
         this.dispose();
-        SistemaAdministrador sistAdmin = new SistemaAdministrador(correo);
+        SistemaPrincipal sistAdmin = new SistemaPrincipal(correo);
         sistAdmin.setVisible(true);
     }//GEN-LAST:event_jButtonSalirActionPerformed
 
-    private void jTextFieldCantidadProductosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldCantidadProductosMouseClicked
-        jTextFieldCantidadProductos.setText("");
-    }//GEN-LAST:event_jTextFieldCantidadProductosMouseClicked
+    private void jButtonReportesVentasGeneralActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReportesVentasGeneralActionPerformed
+        try {
+            reporte();
+            actualizarProductos();
+        } catch (SQLException | IOException ex) {
+            Logger.getLogger(Ventas.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-    private void jTextFieldCantidadProductosKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldCantidadProductosKeyTyped
-        char c = evt.getKeyChar();
-        if (c < '0' || c > '9')
-            evt.consume();
-    }//GEN-LAST:event_jTextFieldCantidadProductosKeyTyped
+    }//GEN-LAST:event_jButtonReportesVentasGeneralActionPerformed
 
     private void jButtonConfirmarVentaProductosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonConfirmarVentaProductosActionPerformed
         confirmarProducto();
@@ -724,62 +523,33 @@ public class VentasAdmin extends javax.swing.JFrame {
         jTextFieldCantidadProductos.setText(jTableVentasGeneral.getValueAt(filaSelec, 4).toString());
     }//GEN-LAST:event_jTableVentasGeneralMouseClicked
 
-    private void jTextFieldCantidadHeladosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldCantidadHeladosMouseClicked
-        jTextFieldCantidadHelados.setText("");
-    }//GEN-LAST:event_jTextFieldCantidadHeladosMouseClicked
-
-    private void jTextFieldCantidadHeladosKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldCantidadHeladosKeyTyped
+    private void jTextFieldCantidadProductosKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldCantidadProductosKeyTyped
         char c = evt.getKeyChar();
         if (c < '0' || c > '9')
-            evt.consume();
-    }//GEN-LAST:event_jTextFieldCantidadHeladosKeyTyped
+        evt.consume();
+    }//GEN-LAST:event_jTextFieldCantidadProductosKeyTyped
 
-    private void jTableVentasHeladosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableVentasHeladosMouseClicked
-        int filaSelec = jTableVentasHelados.rowAtPoint(evt.getPoint());
-        jComboBoxHelados.setSelectedItem(jTableVentasHelados.getValueAt(filaSelec, 2).toString());
-        jTextFieldCantidadHelados.setText(jTableVentasHelados.getValueAt(filaSelec, 4).toString());
-    }//GEN-LAST:event_jTableVentasHeladosMouseClicked
-
-    private void jButtonConfirmarVentaHeladosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonConfirmarVentaHeladosActionPerformed
-        confirmarProducto();
-        actualizarProductos();
-    }//GEN-LAST:event_jButtonConfirmarVentaHeladosActionPerformed
-
-    private void jButtonReportesVentasGeneralActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReportesVentasGeneralActionPerformed
-        try {
-            reporte();
-            actualizarProductos();
-        } catch (SQLException | IOException ex) {
-            Logger.getLogger(VentasAdmin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-    }//GEN-LAST:event_jButtonReportesVentasGeneralActionPerformed
+    private void jTextFieldCantidadProductosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldCantidadProductosMouseClicked
+        jTextFieldCantidadProductos.setText("");
+    }//GEN-LAST:event_jTextFieldCantidadProductosMouseClicked
 
     public static void main(String[] args) throws SQLException, IOException {
         reporte();
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButtonConfirmarVentaHelados;
     private javax.swing.JButton jButtonConfirmarVentaProductos;
     private javax.swing.JButton jButtonReportesVentasGeneral;
     private javax.swing.JButton jButtonSalir;
-    private javax.swing.JComboBox<String> jComboBoxHelados;
     private javax.swing.JComboBox<String> jComboBoxProductos;
-    private com.toedter.calendar.JDateChooser jDateChooserFechaHelados;
     private com.toedter.calendar.JDateChooser jDateChooserFechaProductos;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanelVentasGeneral;
-    private javax.swing.JPanel jPanelVentasHelados;
-    private javax.swing.JRadioButton jRadioButtonTarjetaHelados;
     private javax.swing.JRadioButton jRadioButtonTarjetaProductos;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTableVentasGeneral;
-    private javax.swing.JTable jTableVentasHelados;
-    private javax.swing.JTextField jTextFieldCantidadHelados;
     private javax.swing.JTextField jTextFieldCantidadProductos;
     // End of variables declaration//GEN-END:variables
 }

@@ -35,14 +35,14 @@ import org.apache.poi.ss.util.CellRangeAddress;
  *
  * @author facundolorenzo
  */
-public class StockAdmin extends javax.swing.JFrame {
+public class Stock extends javax.swing.JFrame {
 
     private static String correo;
 
     /**
      * Creates new form ControlStockAdmin
      */
-    public StockAdmin(String correo) {
+    public Stock(String correo) {
         initComponents();
         this.correo = correo;
         setLocationRelativeTo(null);
@@ -518,7 +518,7 @@ public class StockAdmin extends javax.swing.JFrame {
     //Botones funcionales.
     private void jButtonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSalirActionPerformed
         this.dispose();
-        SistemaAdministrador sistAdmin = new SistemaAdministrador(correo);
+        SistemaPrincipal sistAdmin = new SistemaPrincipal(correo);
         sistAdmin.setVisible(true);
     }//GEN-LAST:event_jButtonSalirActionPerformed
 
@@ -596,7 +596,7 @@ public class StockAdmin extends javax.swing.JFrame {
             reporte();
             actualizarStock();
         } catch (SQLException | IOException ex) {
-            Logger.getLogger(StockAdmin.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Stock.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButtonReporteActionPerformed
 

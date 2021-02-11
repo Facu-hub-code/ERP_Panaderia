@@ -6,7 +6,6 @@
 package Ventanas;
 
 import Conexion.Conexion;
-import com.toedter.calendar.JDateChooserBeanInfo;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,7 +13,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +25,9 @@ import javax.swing.table.DefaultTableModel;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -39,7 +43,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * @author facundolorenzo
  */
-public class CajaAdmin extends javax.swing.JFrame {
+public class Caja extends javax.swing.JFrame {
 
     private static String correo;
     private static String ID;
@@ -47,14 +51,12 @@ public class CajaAdmin extends javax.swing.JFrame {
     /**
      * Creates new form ControlCajaAdmin
      */
-    public CajaAdmin(String correo) {
+    public Caja(String correo) {
         initComponents();
-        this.correo = correo;
-        jLabelUser.setText(correo);
-        jLabelTotal.setText("Total: " + calcularTotal() + " $");
         setLocationRelativeTo(null);
-        setTitle("Control de Caja - Sistema Administrador - Panaderia Gloria");
-        actualizarFecha();
+        setTitle("Control de Caja - Sistema - Panaderia Gral. Paz");
+        this.correo = correo;
+        jLabelTotal.setText("Total: " + calcularTotal() + " $");
         actualizar();
     }
 
@@ -62,13 +64,24 @@ public class CajaAdmin extends javax.swing.JFrame {
      * Metodos funcionales.
      */
     
-    private static void reporte() throws SQLException, FileNotFoundException, IOException {
-
+    /**
+     * Crea un nuevo reporte en formato .xlxs ingresando en cada celda el
+     * valor correspondiente que se encuentre en la tabla "caja" de la base de
+     * datos "panaderia".
+     */
+    public static void reporte() throws SQLException, FileNotFoundException, IOException {
         //Se crea una hoja de calculos.
         Workbook book = new XSSFWorkbook();
         Sheet sheet = book.createSheet("Caja");
-
         try {
+            // <editor-fold defaultstate="collapsed" desc="Estetica de la hoja de calculos">
+
+            CreationHelper help = book.getCreationHelper();
+            Drawing draw = sheet.createDrawingPatriarch();
+
+            ClientAnchor anchor = help.createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setRow1(1);
             
             //Se crea y se maquilla la celda del titulo.
             CellStyle tituloEstilo = book.createCellStyle();
@@ -86,6 +99,7 @@ public class CajaAdmin extends javax.swing.JFrame {
             Cell celdaTitulo = filaTitulo.createCell(1);
             celdaTitulo.setCellStyle(tituloEstilo);
             celdaTitulo.setCellValue("Reporte de Caja");
+            
             sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3)); //resize
 
             //se crean las cabeceras de la tabla
@@ -113,29 +127,29 @@ public class CajaAdmin extends javax.swing.JFrame {
                 celdaEnzabezado.setCellStyle(headerStyle);
                 celdaEnzabezado.setCellValue(cabecera[i]);
             }
-            
+
             Connection conn = Conexion.conectar();
             PreparedStatement ps;
             ResultSet rs;
-
+            
             //modificar segun la cantidad de datos.
             int numFilaDatos = 5;
-            
+
             CellStyle datosEstilo = book.createCellStyle();
             datosEstilo.setBorderBottom(BorderStyle.THIN);
             datosEstilo.setBorderLeft(BorderStyle.THIN);
             datosEstilo.setBorderRight(BorderStyle.THIN);
             datosEstilo.setBorderBottom(BorderStyle.THIN);
-            
-            ps = conn.prepareStatement("SELECT id, fecha, monto, concepto, usuario FROM caja");
-            rs = ps.executeQuery();
 
-            int numCol = rs.getMetaData().getColumnCount();
+            // </editor-fold>
+
+            ps = conn.prepareStatement("SELECT * FROM caja");
+            rs = ps.executeQuery();
 
             while (rs.next()) {
                 Row filaDatos = sheet.createRow(numFilaDatos);
 
-                for (int a = 0; a < numCol; a++) {
+                for (int a = 0; a < rs.getMetaData().getColumnCount(); a++) {
 
                     Cell CeldaDatos = filaDatos.createCell(a);
                     CeldaDatos.setCellStyle(datosEstilo);
@@ -161,16 +175,78 @@ public class CajaAdmin extends javax.swing.JFrame {
 
             sheet.setZoom(150);
 
-            FileOutputStream fileOut = new FileOutputStream("ReporteCaja.xlsx");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date fecha = new Date();
+            String F = sdf.format(fecha);
+
+            FileOutputStream fileOut = new FileOutputStream(""+F+".xlsx");
             book.write(fileOut);
             fileOut.close();
-            JOptionPane.showMessageDialog(null, "Reporte de Caja guardado");
+            JOptionPane.showMessageDialog(null, "Reporte guardado con el nombre de la fecha.");
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, e.toString());
         }
     }
+
+    /**
+     * Modifica cierto valor de la tabla "caja" de la base de
+     * datos "panaderia".
+     * Lo realiza mediante el ID tomado de la interface.
+     */
+    public void modificar() {
+        try {
+            Connection conn = Conexion.conectar();
+            PreparedStatement ps = conn.prepareStatement("UPDATE caja SET "
+                    + "fecha = ?, monto = ?, concepto = ?, usuario = ? WHERE ID ='" + ID + "'");
+            ps.setString(1, ((JTextField) jDateChooserFecha.getDateEditor().getUiComponent()).getText());
+            ps.setDouble(2, Double.parseDouble(jTextFieldMonto.getText().trim()));
+            ps.setString(3, jComboBoxConcepto.getSelectedItem().toString());
+            ps.setString(4, "" + correo);
+            ps.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Modificacion exitosa");
+            conn.close();
+            actualizar();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error en la modificacion, por favor intente"
+                    + "nuevamente o comuniquese con el administrador.");
+        }
+    }
+
     
+    /**
+     * Actualiza el estado de la interface luego de ejecutar algun metodo.
+     */
+    public void actualizar() {
+        actualizarFecha();
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("ID");
+        model.addColumn("Fecha");
+        model.addColumn("Monto");
+        model.addColumn("Concepto");
+        model.addColumn("Usuario");
+        jTableCaja.setModel(model);
+        String[] datos = new String[5];
+        Connection cn = Conexion.conectar();
+        try {
+            PreparedStatement ps = cn.prepareStatement("SELECT * FROM caja");
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                datos[0] = rs.getString(1);//numero
+                datos[1] = rs.getDate("fecha").toString();//fecha
+                datos[2] = rs.getDouble(3) + "";//monto
+                datos[3] = rs.getString(4);//concepto
+                datos[4] = rs.getString(5);//usuario
+                model.addRow(datos);
+            }
+            cn.close();
+            jLabelTotal.setText("Total: " + calcularTotal() + " $");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+
     public void actualizarFecha() {
         Calendar fechaActual = new GregorianCalendar();
         jDateChooserFecha.setCalendar(fechaActual);
@@ -216,35 +292,6 @@ public class CajaAdmin extends javax.swing.JFrame {
         return total;
     }
 
-    public void actualizar() {
-        DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("id");
-        model.addColumn("fecha");
-        model.addColumn("monto");
-        model.addColumn("concepto");
-        model.addColumn("usuario");
-        jTableCaja.setModel(model);
-        String[] datos = new String[5];
-        Connection cn = Conexion.conectar();
-        try {
-            PreparedStatement ps = cn.prepareStatement("SELECT * FROM caja");
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                datos[0] = rs.getString(1);//numero
-                datos[1] = rs.getDate("fecha").toString();//fecha
-                datos[2] = rs.getDouble(3) + "";//monto
-                datos[3] = rs.getString(4);//concepto
-                datos[4] = rs.getString(5);//usuario
-                model.addRow(datos);
-            }
-            cn.close();
-            jLabelTotal.setText("Total: " + calcularTotal() + " $");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
-
     public void limpiar() {
         jComboBoxConcepto.setSelectedItem(null);
         jTextFieldMonto.setText("Monto");
@@ -262,7 +309,6 @@ public class CajaAdmin extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         jButtonSalir = new javax.swing.JButton();
-        jLabelUser = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jTextFieldMonto = new javax.swing.JTextField();
         jButtonAgregar = new javax.swing.JButton();
@@ -273,6 +319,7 @@ public class CajaAdmin extends javax.swing.JFrame {
         jLabelTotal = new javax.swing.JLabel();
         jDateChooserFecha = new com.toedter.calendar.JDateChooser();
         jButtonModificar = new javax.swing.JButton();
+        jLabelTotal1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -298,10 +345,8 @@ public class CajaAdmin extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 819, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabelUser, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButtonSalir)
                 .addContainerGap())
         );
@@ -309,15 +354,10 @@ public class CajaAdmin extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButtonSalir))
-                        .addGap(0, 6, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabelUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButtonSalir))
+                .addGap(0, 6, Short.MAX_VALUE))
         );
 
         jPanel2.setBackground(new java.awt.Color(51, 51, 51));
@@ -373,8 +413,8 @@ public class CajaAdmin extends javax.swing.JFrame {
         jLabelTotal.setBackground(new java.awt.Color(255, 255, 255));
         jLabelTotal.setFont(new java.awt.Font("Lucida Grande", 1, 18)); // NOI18N
         jLabelTotal.setForeground(new java.awt.Color(255, 255, 255));
-        jLabelTotal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabelTotal.setText("TOTAL:");
+        jLabelTotal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabelTotal.setText("Dinero en caja:");
 
         jDateChooserFecha.setDateFormatString("yyyy/MM/dd HH:mm:ss");
 
@@ -384,6 +424,12 @@ public class CajaAdmin extends javax.swing.JFrame {
                 jButtonModificarActionPerformed(evt);
             }
         });
+
+        jLabelTotal1.setBackground(new java.awt.Color(255, 255, 255));
+        jLabelTotal1.setFont(new java.awt.Font("Lucida Grande", 1, 18)); // NOI18N
+        jLabelTotal1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabelTotal1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabelTotal1.setText("TOTAL:");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -397,8 +443,9 @@ public class CajaAdmin extends javax.swing.JFrame {
                     .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonActualizar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabelTotal1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 830, Short.MAX_VALUE)
                 .addContainerGap())
@@ -421,8 +468,10 @@ public class CajaAdmin extends javax.swing.JFrame {
                         .addComponent(jButtonAgregar)
                         .addGap(18, 18, 18)
                         .addComponent(jButtonActualizar1)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabelTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabelTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabelTotal1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -455,7 +504,7 @@ public class CajaAdmin extends javax.swing.JFrame {
      */
     private void jButtonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSalirActionPerformed
         this.dispose();
-        SistemaAdministrador sistAdmin = new SistemaAdministrador(correo);
+        SistemaPrincipal sistAdmin = new SistemaPrincipal(correo);
         sistAdmin.setVisible(true);
     }//GEN-LAST:event_jButtonSalirActionPerformed
 
@@ -475,23 +524,10 @@ public class CajaAdmin extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextFieldMontoKeyTyped
 
     private void jButtonModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonModificarActionPerformed
-        try {
-            Connection conn = Conexion.conectar();
-            //ID: 1-fecha 2-monto 3-concepto 4-usuario
-            PreparedStatement ps = conn.prepareStatement("UPDATE caja SET "
-                    + "fecha = ?, monto = ?, concepto = ?, usuario = ? WHERE ID ='" + ID + "'");
-            ps.setString(1, ((JTextField) jDateChooserFecha.getDateEditor().getUiComponent()).getText());
-            ps.setDouble(2, Double.parseDouble(jTextFieldMonto.getText().trim())); 
-            ps.setString(3, jComboBoxConcepto.getSelectedItem().toString());
-            ps.setString(4, ""+correo);
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Modificacion exitosa");
-            conn.close();
-            actualizar();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
+        modificar();
+        actualizar();
     }//GEN-LAST:event_jButtonModificarActionPerformed
-    }
+
     private void jTableCajaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableCajaMouseClicked
         int filaSelec = jTableCaja.rowAtPoint(evt.getPoint());
         ID = jTableCaja.getValueAt(filaSelec, 0).toString();
@@ -501,12 +537,12 @@ public class CajaAdmin extends javax.swing.JFrame {
         try {
             reporte();
         } catch (SQLException | IOException ex) {
-            Logger.getLogger(CajaAdmin.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Caja.class.getName()).log(Level.SEVERE, null, ex);
         }
         actualizar();
     }//GEN-LAST:event_jButtonActualizar1ActionPerformed
 
-     public static void main(String[] args) throws SQLException, IOException {
+    public static void main(String[] args) throws SQLException, IOException {
         reporte();
     }
 
@@ -519,7 +555,7 @@ public class CajaAdmin extends javax.swing.JFrame {
     private com.toedter.calendar.JDateChooser jDateChooserFecha;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabelTotal;
-    private javax.swing.JLabel jLabelUser;
+    private javax.swing.JLabel jLabelTotal1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
