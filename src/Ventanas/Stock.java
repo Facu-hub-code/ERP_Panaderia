@@ -14,12 +14,17 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -38,30 +43,41 @@ import org.apache.poi.ss.util.CellRangeAddress;
 public class Stock extends javax.swing.JFrame {
 
     private static String correo;
+    private static int cantidadMinima;
 
     /**
      * Creates new form ControlStockAdmin
      */
     public Stock(String correo) {
-        initComponents();
+        cantidadMinima = 10;
         this.correo = correo;
+        initComponents();
         setLocationRelativeTo(null);
         setTitle("Control Stock - Sistema Administrador - Panaderia Gloria");
         actualizarStock();
-        
+        revisionCantidad();
+
     }
 
     /**
-     * Metodos funcionales.
+     * Crea un nuevo reporte en formato .xlxs ingresando en cada celda el valor
+     * correspondiente que se encuentre en la tabla "stock" de la base de datos
+     * "panaderia".
      */
-    
-    private static void reporte() throws SQLException, FileNotFoundException, IOException {
-
+    public static void reporte() throws SQLException, FileNotFoundException, IOException {
         //Se crea una hoja de calculos.
         Workbook book = new XSSFWorkbook();
         Sheet sheet = book.createSheet("Stock");
-
         try {
+            // <editor-fold defaultstate="collapsed" desc="Estetica de la hoja de calculos">
+
+            CreationHelper help = book.getCreationHelper();
+            Drawing draw = sheet.createDrawingPatriarch();
+
+            ClientAnchor anchor = help.createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setRow1(1);
+
             //Se crea y se maquilla la celda del titulo.
             CellStyle tituloEstilo = book.createCellStyle();
             //Se centra el texto.
@@ -77,7 +93,8 @@ public class Stock extends javax.swing.JFrame {
             Row filaTitulo = sheet.createRow(1);
             Cell celdaTitulo = filaTitulo.createCell(1);
             celdaTitulo.setCellStyle(tituloEstilo);
-            celdaTitulo.setCellValue("Reporte de Productos");
+            celdaTitulo.setCellValue("Reporte de Stock");
+
             sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3)); //resize
 
             //se crean las cabeceras de la tabla
@@ -104,49 +121,39 @@ public class Stock extends javax.swing.JFrame {
                 Cell celdaEnzabezado = filaEncabezados.createCell(i);
                 celdaEnzabezado.setCellStyle(headerStyle);
                 celdaEnzabezado.setCellValue(cabecera[i]);
-            }//</editor-fold> 
-            
+            }
+
             Connection conn = Conexion.conectar();
             PreparedStatement ps;
             ResultSet rs;
 
             //modificar segun la cantidad de datos.
             int numFilaDatos = 4;
-            
+
             CellStyle datosEstilo = book.createCellStyle();
             datosEstilo.setBorderBottom(BorderStyle.THIN);
             datosEstilo.setBorderLeft(BorderStyle.THIN);
             datosEstilo.setBorderRight(BorderStyle.THIN);
             datosEstilo.setBorderBottom(BorderStyle.THIN);
-            
-            ps = conn.prepareStatement("SELECT id, nombre, cantidad, precio FROM stock");
-            rs = ps.executeQuery();
 
-            int numCol = rs.getMetaData().getColumnCount();
+            // </editor-fold>
+            ps = conn.prepareStatement("SELECT * FROM stock");
+            rs = ps.executeQuery();
 
             while (rs.next()) {
                 Row filaDatos = sheet.createRow(numFilaDatos);
 
-                for (int a = 0; a < numCol; a++) {
+                for (int a = 0; a < rs.getMetaData().getColumnCount(); a++) {
 
                     Cell CeldaDatos = filaDatos.createCell(a);
                     CeldaDatos.setCellStyle(datosEstilo);
 
-                    if (a == 2 || a == 3) {
-                        CeldaDatos.setCellValue(rs.getDouble(a + 1));
-                    }else if(a == 0){
+                    if (a == 0) {
                         CeldaDatos.setCellValue(rs.getInt(a + 1));
-                    }
-                    else {
+                    } else {
                         CeldaDatos.setCellValue(rs.getString(a + 1));
                     }
                 }
-
-
-
-//                Cell celdaImporte = filaDatos.createCell(4);
-//                celdaImporte.setCellStyle(datosEstilo);
-//                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
 
                 numFilaDatos++;
 
@@ -159,16 +166,23 @@ public class Stock extends javax.swing.JFrame {
 
             sheet.setZoom(150);
 
-            FileOutputStream fileOut = new FileOutputStream("ReporteProductos.xlsx");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date fecha = new Date();
+            String F = sdf.format(fecha);
+
+            FileOutputStream fileOut = new FileOutputStream("Stock: " + F + ".xlsx");
             book.write(fileOut);
             fileOut.close();
-            JOptionPane.showMessageDialog(null, "Reporte de Stock guardado");
+            JOptionPane.showMessageDialog(null, "Reporte guardado con el nombre de la fecha.");
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, e.toString());
         }
     }
-    
+
+    /**
+     * Filtra los datos de la busqueda sobre un campo de texto, para agilizarla.
+     */
     public void filtrarDatos(String valor) {
         Connection conn = Conexion.conectar();
         String[] titulos = {"ID", "Nombre", "Cantidad", "Precio"};
@@ -275,6 +289,23 @@ public class Stock extends javax.swing.JFrame {
         jTextFieldNombre.setText("nombre");
         jTextFieldCantidad.setText("cantidad");
         jTextFieldPrecio.setText("precio");
+    }
+
+    public void revisionCantidad() {
+        String mensaje = "";
+        try {
+            Connection cn = Conexion.conectar();
+            PreparedStatement ps = cn.prepareStatement("SELECT * FROM stock");
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                if(rs.getDouble("cantidad")<10){
+                    mensaje = "Queda menos de 10 unidades de "+rs.getString("nombre");
+                    JOptionPane.showMessageDialog(null, mensaje);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
     }
 
     /**
@@ -600,11 +631,6 @@ public class Stock extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButtonReporteActionPerformed
 
-    public static void main(String[] args) throws SQLException, IOException {
-        reporte();
-    }
-    
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonAgregar;
     private javax.swing.JButton jButtonEliminar;
