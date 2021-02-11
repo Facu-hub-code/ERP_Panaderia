@@ -51,7 +51,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         jLabel4.setBackground(new java.awt.Color(255, 255, 255));
         jLabel4.setFont(new java.awt.Font("Kefa", 1, 24)); // NOI18N
         jLabel4.setForeground(java.awt.Color.lightGray);
-        jLabel4.setText("Sistema Administrador");
+        jLabel4.setText("Sistema de Administracion");
 
         btn_Salir.setFont(new java.awt.Font("Lucida Grande", 1, 13)); // NOI18N
         btn_Salir.setText("Salir");

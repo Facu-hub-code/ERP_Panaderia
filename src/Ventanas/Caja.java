@@ -56,18 +56,63 @@ public class Caja extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setTitle("Control de Caja - Sistema - Panaderia Gral. Paz");
         this.correo = correo;
-        jLabelTotal.setText("Total: " + calcularTotal() + " $");
         actualizar();
     }
-
     /**
-     * Metodos funcionales.
+     * Escribe actualiza los campos de texto donde figuran montos.
      */
+    public void writeLabels(){
+        jLabelTotal.setText("Total: " + calcularTotal() + " $");
+        jLabelDinero.setText("Dinero en caja: " + calcularEfectivo() + " $");
+    }
     
     /**
-     * Crea un nuevo reporte en formato .xlxs ingresando en cada celda el
-     * valor correspondiente que se encuentre en la tabla "caja" de la base de
-     * datos "panaderia".
+     * Actualiza la fecha del JDateChooser por c/vez que se invoca.
+     */
+    public void actualizarFecha() {
+        Calendar fechaActual = new GregorianCalendar();
+        jDateChooserFecha.setCalendar(fechaActual);
+    }
+    
+    /**
+     * Actualiza el estado de la interface luego de ejecutar algun metodo.
+     */
+    public void actualizar() {
+        actualizarFecha();
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("ID");
+        model.addColumn("Fecha");
+        model.addColumn("Monto");
+        model.addColumn("Concepto");
+        model.addColumn("Usuario");
+        model.addColumn("Efectivo");
+        jTableCaja.setModel(model);
+        String[] datos = new String[6];
+        Connection cn = Conexion.conectar();
+        try {
+            PreparedStatement ps = cn.prepareStatement("SELECT * FROM caja");
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                datos[0] = rs.getString(1);//numero
+                datos[1] = rs.getDate("fecha").toString();//fecha
+                datos[2] = rs.getDouble(3) + "";//monto
+                datos[3] = rs.getString(4);//concepto
+                datos[4] = rs.getString(5);//usuario
+                datos[5] = rs.getBoolean("efectivo")+"";
+                model.addRow(datos);
+            }
+            cn.close();
+            writeLabels();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+    
+    /**
+     * Crea un nuevo reporte en formato .xlxs ingresando en cada celda el valor
+     * correspondiente que se encuentre en la tabla "caja" de la base de datos
+     * "panaderia".
      */
     public static void reporte() throws SQLException, FileNotFoundException, IOException {
         //Se crea una hoja de calculos.
@@ -82,7 +127,7 @@ public class Caja extends javax.swing.JFrame {
             ClientAnchor anchor = help.createClientAnchor();
             anchor.setCol1(0);
             anchor.setRow1(1);
-            
+
             //Se crea y se maquilla la celda del titulo.
             CellStyle tituloEstilo = book.createCellStyle();
             //Se centra el texto.
@@ -99,11 +144,11 @@ public class Caja extends javax.swing.JFrame {
             Cell celdaTitulo = filaTitulo.createCell(1);
             celdaTitulo.setCellStyle(tituloEstilo);
             celdaTitulo.setCellValue("Reporte de Caja");
-            
+
             sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3)); //resize
 
             //se crean las cabeceras de la tabla
-            String[] cabecera = new String[]{"Id", "Fecha", "Monto", "Concepto", "Usuario"};
+            String[] cabecera = new String[]{"Id", "Fecha", "Monto", "Concepto", "Usuario", "Efectivo"};
 
             CellStyle headerStyle = book.createCellStyle();
             headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
@@ -120,7 +165,7 @@ public class Caja extends javax.swing.JFrame {
             font.setFontHeightInPoints((short) 12);
             headerStyle.setFont(font);
             //cambiar segun cantidad de datos
-            Row filaEncabezados = sheet.createRow(4);
+            Row filaEncabezados = sheet.createRow(5);
 
             for (int i = 0; i < cabecera.length; i++) {
                 Cell celdaEnzabezado = filaEncabezados.createCell(i);
@@ -131,9 +176,9 @@ public class Caja extends javax.swing.JFrame {
             Connection conn = Conexion.conectar();
             PreparedStatement ps;
             ResultSet rs;
-            
+
             //modificar segun la cantidad de datos.
-            int numFilaDatos = 5;
+            int numFilaDatos = 6;
 
             CellStyle datosEstilo = book.createCellStyle();
             datosEstilo.setBorderBottom(BorderStyle.THIN);
@@ -142,7 +187,6 @@ public class Caja extends javax.swing.JFrame {
             datosEstilo.setBorderBottom(BorderStyle.THIN);
 
             // </editor-fold>
-
             ps = conn.prepareStatement("SELECT * FROM caja");
             rs = ps.executeQuery();
 
@@ -160,9 +204,6 @@ public class Caja extends javax.swing.JFrame {
                         CeldaDatos.setCellValue(rs.getString(a + 1));
                     }
                 }
-//                Cell celdaImporte = filaDatos.createCell(4);
-//                celdaImporte.setCellStyle(datosEstilo);
-//                celdaImporte.setCellFormula(String.format("C%d+D%d", numFilaDatos + 1, numFilaDatos + 1));
 
                 numFilaDatos++;
 
@@ -179,7 +220,7 @@ public class Caja extends javax.swing.JFrame {
             Date fecha = new Date();
             String F = sdf.format(fecha);
 
-            FileOutputStream fileOut = new FileOutputStream(""+F+".xlsx");
+            FileOutputStream fileOut = new FileOutputStream("" + F + ".xlsx");
             book.write(fileOut);
             fileOut.close();
             JOptionPane.showMessageDialog(null, "Reporte guardado con el nombre de la fecha.");
@@ -190,19 +231,19 @@ public class Caja extends javax.swing.JFrame {
     }
 
     /**
-     * Modifica cierto valor de la tabla "caja" de la base de
-     * datos "panaderia".
+     * Modifica cierto valor de la tabla "caja" de la base de datos "panaderia".
      * Lo realiza mediante el ID tomado de la interface.
      */
     public void modificar() {
         try {
             Connection conn = Conexion.conectar();
             PreparedStatement ps = conn.prepareStatement("UPDATE caja SET "
-                    + "fecha = ?, monto = ?, concepto = ?, usuario = ? WHERE ID ='" + ID + "'");
+                    + "fecha = ?, monto = ?, concepto = ?, usuario = ?, efectivo = ? WHERE ID ='" + ID + "'");
             ps.setString(1, ((JTextField) jDateChooserFecha.getDateEditor().getUiComponent()).getText());
             ps.setDouble(2, Double.parseDouble(jTextFieldMonto.getText().trim()));
             ps.setString(3, jComboBoxConcepto.getSelectedItem().toString());
             ps.setString(4, "" + correo);
+            ps.setBoolean(5, jRadioButtonEfectivo.isSelected());
             ps.executeUpdate();
             JOptionPane.showMessageDialog(null, "Modificacion exitosa");
             conn.close();
@@ -213,65 +254,36 @@ public class Caja extends javax.swing.JFrame {
         }
     }
 
-    
     /**
-     * Actualiza el estado de la interface luego de ejecutar algun metodo.
+     * Agrega un movimiento a la base de datos y luego calcula el total en el
+     * jLabelTotal.
      */
-    public void actualizar() {
-        actualizarFecha();
-        DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("ID");
-        model.addColumn("Fecha");
-        model.addColumn("Monto");
-        model.addColumn("Concepto");
-        model.addColumn("Usuario");
-        jTableCaja.setModel(model);
-        String[] datos = new String[5];
-        Connection cn = Conexion.conectar();
-        try {
-            PreparedStatement ps = cn.prepareStatement("SELECT * FROM caja");
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                datos[0] = rs.getString(1);//numero
-                datos[1] = rs.getDate("fecha").toString();//fecha
-                datos[2] = rs.getDouble(3) + "";//monto
-                datos[3] = rs.getString(4);//concepto
-                datos[4] = rs.getString(5);//usuario
-                model.addRow(datos);
-            }
-            cn.close();
-            jLabelTotal.setText("Total: " + calcularTotal() + " $");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
-
-    public void actualizarFecha() {
-        Calendar fechaActual = new GregorianCalendar();
-        jDateChooserFecha.setCalendar(fechaActual);
-    }
-
     public void agregarMovimiento() {
         Connection conn = Conexion.conectar();
         //actualizarFecha();
         try {
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO caja VALUES(?,?,?,?, ?)");
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO caja VALUES(?,?,?,?,?,?)");
             ps.setString(1, "0"); //id
             ps.setString(2, ((JTextField) jDateChooserFecha.getDateEditor().getUiComponent()).getText()); //fecha
             ps.setDouble(3, Double.parseDouble(jTextFieldMonto.getText().trim())); //monto
             ps.setString(4, jComboBoxConcepto.getSelectedItem().toString()); //concepto
             ps.setString(5, correo + ""); //usuario
+            ps.setBoolean(6, jRadioButtonEfectivo.isSelected());
             ps.executeUpdate();
+            
             jTextFieldMonto.setText("Monto");
             JOptionPane.showMessageDialog(null, "Registro exitoso");
             conn.close();
             jLabelTotal.setText("Total: " + calcularTotal() + " $");
+            
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e.toString());
         }
     }
 
+    /**
+     * Calcula el dinero total de la caja.
+     */
     public double calcularTotal() {
         double total = 0;
         Connection cn = Conexion.conectar();
@@ -290,6 +302,28 @@ public class Caja extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, e.toString());
         }
         return total;
+    }
+
+    public double calcularEfectivo() {
+        double efectivo = 0;
+        Connection cn = Conexion.conectar();
+        try {
+            PreparedStatement ps = cn.prepareStatement("SELECT * from caja");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                if (rs.getBoolean("efectivo")) {
+                    if ((rs.getString("concepto")).equalsIgnoreCase("Ingreso")) {
+                        efectivo += rs.getDouble("monto");
+                    } else if ((rs.getString("concepto")).equalsIgnoreCase("Egreso")) {
+                        efectivo -= rs.getDouble("monto");
+                    }
+                }
+            }
+            cn.close();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+        return efectivo;
     }
 
     public void limpiar() {
@@ -319,7 +353,9 @@ public class Caja extends javax.swing.JFrame {
         jLabelTotal = new javax.swing.JLabel();
         jDateChooserFecha = new com.toedter.calendar.JDateChooser();
         jButtonModificar = new javax.swing.JButton();
-        jLabelTotal1 = new javax.swing.JLabel();
+        jLabelDinero = new javax.swing.JLabel();
+        jRadioButtonEfectivo = new javax.swing.JRadioButton();
+        jTextFieldNext = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -414,7 +450,7 @@ public class Caja extends javax.swing.JFrame {
         jLabelTotal.setFont(new java.awt.Font("Lucida Grande", 1, 18)); // NOI18N
         jLabelTotal.setForeground(new java.awt.Color(255, 255, 255));
         jLabelTotal.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabelTotal.setText("Dinero en caja:");
+        jLabelTotal.setText("TOTAL:");
 
         jDateChooserFecha.setDateFormatString("yyyy/MM/dd HH:mm:ss");
 
@@ -425,11 +461,28 @@ public class Caja extends javax.swing.JFrame {
             }
         });
 
-        jLabelTotal1.setBackground(new java.awt.Color(255, 255, 255));
-        jLabelTotal1.setFont(new java.awt.Font("Lucida Grande", 1, 18)); // NOI18N
-        jLabelTotal1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabelTotal1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabelTotal1.setText("TOTAL:");
+        jLabelDinero.setBackground(new java.awt.Color(255, 255, 255));
+        jLabelDinero.setFont(new java.awt.Font("Lucida Grande", 1, 18)); // NOI18N
+        jLabelDinero.setForeground(new java.awt.Color(255, 255, 255));
+        jLabelDinero.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabelDinero.setText("Dinero en caja:");
+
+        jRadioButtonEfectivo.setText("Efectivo");
+
+        jTextFieldNext.setFont(new java.awt.Font("Lucida Grande", 0, 12)); // NOI18N
+        jTextFieldNext.setForeground(java.awt.Color.lightGray);
+        jTextFieldNext.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jTextFieldNext.setText("Dinero para el sgte turno.");
+        jTextFieldNext.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTextFieldNextMouseClicked(evt);
+            }
+        });
+        jTextFieldNext.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                jTextFieldNextKeyTyped(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -437,17 +490,22 @@ public class Caja extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jTextFieldMonto)
-                    .addComponent(jDateChooserFecha, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonActualizar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabelTotal1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 830, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jTextFieldMonto)
+                        .addComponent(jDateChooserFecha, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButtonAgregar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButtonModificar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabelTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabelDinero, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jRadioButtonEfectivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jTextFieldNext, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jButtonActualizar1, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 841, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -462,16 +520,20 @@ public class Caja extends javax.swing.JFrame {
                         .addComponent(jComboBoxConcepto, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(jDateChooserFecha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jRadioButtonEfectivo)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButtonModificar)
                         .addGap(18, 18, 18)
                         .addComponent(jButtonAgregar)
                         .addGap(18, 18, 18)
                         .addComponent(jButtonActualizar1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextFieldNext, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabelTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabelTotal1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jLabelDinero, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -508,6 +570,7 @@ public class Caja extends javax.swing.JFrame {
         sistAdmin.setVisible(true);
     }//GEN-LAST:event_jButtonSalirActionPerformed
 
+    //Limpia el campo de texto Monto.
     private void jTextFieldMontoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldMontoMouseClicked
         jTextFieldMonto.setText("");
     }//GEN-LAST:event_jTextFieldMontoMouseClicked
@@ -517,10 +580,14 @@ public class Caja extends javax.swing.JFrame {
         actualizar();
     }//GEN-LAST:event_jButtonAgregarActionPerformed
 
+    //Evita ingresar datos incorrectos(solo permite nros).
     private void jTextFieldMontoKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldMontoKeyTyped
         char c = evt.getKeyChar();
-        if (c < '0' || c > '9' || c == '.')
-            evt.consume();
+        if (c != '.') {
+            if (c < '0' || c > '9') {
+                evt.consume();
+            }
+        }
     }//GEN-LAST:event_jTextFieldMontoKeyTyped
 
     private void jButtonModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonModificarActionPerformed
@@ -528,6 +595,7 @@ public class Caja extends javax.swing.JFrame {
         actualizar();
     }//GEN-LAST:event_jButtonModificarActionPerformed
 
+    //Selecciona una fila de la tabla Caja.
     private void jTableCajaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableCajaMouseClicked
         int filaSelec = jTableCaja.rowAtPoint(evt.getPoint());
         ID = jTableCaja.getValueAt(filaSelec, 0).toString();
@@ -542,9 +610,19 @@ public class Caja extends javax.swing.JFrame {
         actualizar();
     }//GEN-LAST:event_jButtonActualizar1ActionPerformed
 
-    public static void main(String[] args) throws SQLException, IOException {
-        reporte();
-    }
+    private void jTextFieldNextMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTextFieldNextMouseClicked
+        jTextFieldMonto.setText("");
+    }//GEN-LAST:event_jTextFieldNextMouseClicked
+
+    private void jTextFieldNextKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldNextKeyTyped
+        char c = evt.getKeyChar();
+        if (c != '.') {
+            if (c < '0' || c > '9') {
+                evt.consume();
+            }
+        }
+    }//GEN-LAST:event_jTextFieldNextKeyTyped
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonActualizar1;
@@ -554,12 +632,14 @@ public class Caja extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBoxConcepto;
     private com.toedter.calendar.JDateChooser jDateChooserFecha;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabelDinero;
     private javax.swing.JLabel jLabelTotal;
-    private javax.swing.JLabel jLabelTotal1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JRadioButton jRadioButtonEfectivo;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTableCaja;
     private javax.swing.JTextField jTextFieldMonto;
+    private javax.swing.JTextField jTextFieldNext;
     // End of variables declaration//GEN-END:variables
 }

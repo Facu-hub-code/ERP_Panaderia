@@ -100,7 +100,7 @@
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Sistema Administrador"/>
+            <Property name="text" type="java.lang.String" value="Sistema de Administracion"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JButton" name="btn_Salir">
